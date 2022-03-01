@@ -1,4 +1,7 @@
-%% Task for BMI competition
+%% Pre-Task for BMI competition
+%% Aline Buat
+% 26/02/2022
+
 clear
 close all;
 
@@ -265,7 +268,6 @@ xlabel('t [ms]'); ylabel('Firing rate [Hz]');
 
 
 for k = k_list
-    
     [neuron_tuning_dir_k_mean, neuron_tuning_dir_k_std] = neuron_tuning_dir_k(trial, n_unit, k, N_bins);
     neuron_tuning(k) = neuron_tuning_dir_k_mean;
     neuron_tuning_std(k) = neuron_tuning_dir_k_std;
@@ -274,17 +276,24 @@ for k = k_list
 end
 legend;
 
+theta = (30+40*k_list)/180*pi;
+figure;
+polarplot([theta,theta(1)], [neuron_tuning,neuron_tuning(1)],'-.o', 'MarkerSize', 8);
+title("Tuning Curve of Neuron unit ="+n_unit);
+
+
 figure;grid on; hold on;
 errorbar(k_list, neuron_tuning, neuron_tuning_std);
 xlabel('k');
 ylabel('Average firing rate');
 title("Neuron unit ="+n_unit);
 
+% Fit tuning curve
 
-theta = (30+40*k_list)/180*pi;
-figure;
-polarplot([theta,theta(1)], [neuron_tuning,neuron_tuning(1)],'-.o', 'MarkerSize', 8);
-title("Tuning Curve of Neuron unit ="+n_unit);
+f_tuning = fit(theta', neuron_tuning', 'gauss1');
+plot(f_tuning);
+
+
 
 
 %% Multiplot of arm movement in 3D
