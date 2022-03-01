@@ -3,9 +3,14 @@ function [neuron_tuning_dir_k_mean, neuron_tuning_dir_k_std] = neuron_tuning_dir
     % tuning is described as firing rate averaged over time
     % estimate of std 
     
+    % time_vect variable allows to choose over what time period we evaluate
+    % the spikes
+
+
     % matrix: gives [neuron tuning, std tune]
 
     
+
 
     N_trials = size(trial, 1);
     N_reaching_angles = size(trial, 2);
@@ -13,6 +18,9 @@ function [neuron_tuning_dir_k_mean, neuron_tuning_dir_k_std] = neuron_tuning_dir
     N_neuralunits = size(trial(1,1).spikes, 1);
     
     neuron_spikes = concat_spikes_neuron_dir_k(trial, neuron, dir);
+
+    
+
     neuron_spikes = neuron_spikes(:, 1:350);
     T = size(neuron_spikes, 2);
     Delt = T / N_bins;
@@ -38,7 +46,7 @@ function [neuron_tuning_dir_k_mean, neuron_tuning_dir_k_std] = neuron_tuning_dir
 %     neuron_tuning_dir_k_std = std(f_smooth);
     
     
-    plot(f_smooth, 'DisplayName', "dir="+dir);
+%     plot(f_smooth, 'DisplayName', "dir="+dir);
 
 
 end

@@ -8,9 +8,21 @@ close all;
 
 %% Init
 load('monkeydata_training.mat');
-N_trials = size(trial, 1);
-N_reaching_angles = size(trial, 2);
-N_neuralunits = size(trial(1,1).spikes, 1);
+
+%% make a subset of original data for training
+trial_tr = trial(1:80, :); % subset of original data set
+trial_test = trial(81:end, :);  % subset of original data set for testing
+
+% dimentions of data
+N_trials = size(trial_tr, 1);
+N_reaching_angles = size(trial_tr, 2);
+N_neuralunits = size(trial_tr(1,1).spikes, 1);
+N_trial_tr = size(trial_tr, 1);
+
+% make a list of unit direction vectors for each angle (cartesian, x, y)
+k_list = 1:N_reaching_angles;
+theta = (30+40*k_list)/180*pi;
+unit_vect_list = [cos(theta); sin(theta)];
 
 
 %% tuning curve
@@ -67,10 +79,51 @@ ylim([0,inf]);
 %% Encode Population tuning
 
 k_list = 1:N_reaching_angles;
-n_list = 1:N_trials;
+n_list = 1:N_trial_tr;
+neuron_list = 1:N_neuralunits;
+
+theta = (30+40*k_list)/180*pi;
 
 
-neuron_tuning = zeros(N_trials, N_reaching_angles);
+neuron_tuning = zeros(N_trial_tr, N_reaching_angles);
+
+figure; 
+for neuron = neuron_list
+    for k = k_list
+        [neuron_tuning_dir_k_mean, neuron_tuning_dir_k_std] = neuron_tuning_dir_k(trial_tr, neuron, k, N_bins);
+        neuron_tuning(neuron, k) = neuron_tuning_dir_k_mean;
+    end
+    polarplot([theta, theta(1)], [neuron_tuning(neuron,:), neuron_tuning(neuron,1)]); hold on;
+end
+
+
+
+%% test on data to predict direction of movement
+
+% select trial to test
+N_trial_test = size(trial_test, 1);
+
+n = 10;
+k= floor(rand*8)+1;
+
+neuron_list = 1:N_neuralunits;
+
+spikes = trial_test(n, k).spikes;
+
+t = floor(rand*size(spikes, 2)) + 1;
+spikes = spikes(:, 1:t); % try on limited time data 
+
+% get average rate for each neuron
+neuron_resp = sum(spikes, 2)/ t;
+
+% initialize population difference
+fa = zeros(1, N_neuralunits);
+
+
+
+% for neuron = neuron_list
+%     fa(neuron) = max(neuron_tuning(neuron,:)) * (cos(neuron_resp(neuron)-max(neuron)))
+% end
 
 
 
