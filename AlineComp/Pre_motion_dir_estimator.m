@@ -10,8 +10,8 @@ close all;
 load('monkeydata_training.mat');
 
 %% make a subset of original data for training
-trial_tr = trial(1:80, :); % subset of original data set
-trial_test = trial(81:end, :);  % subset of original data set for testing
+trial_tr = trial(20:100, :); % subset of original data set
+trial_test = trial(1:19, :);  % subset of original data set for testing
 
 % dimentions of data
 N_trials = size(trial_tr, 1);
@@ -21,7 +21,7 @@ N_trial_tr = size(trial_tr, 1);
 
 % make a list of unit direction vectors for each angle (cartesian, x, y)
 k_list = 1:N_reaching_angles;
-theta = (30+40*k_list)/180*pi;
+theta = (40*k_list-10)/180*pi;
 unit_vect_list = [cos(theta); sin(theta)];
 
 
@@ -64,8 +64,8 @@ xlabel('k');
 ylabel('Average firing rate');
 title("Neuron unit ="+n_unit);
 
-f_tuning = fit(k_list', neuron_tuning', 'gauss1');
-plot(f_tuning);
+% f_tuning = fit(k_list', neuron_tuning', 'gauss1');
+% plot(f_tuning);
 f_smooth = smoothdata(neuron_tuning, 'gaussian', 4);
 plot(f_smooth);
 
@@ -96,6 +96,7 @@ for neuron = neuron_list
     polarplot([theta, theta(1)], [neuron_tuning(neuron,:), neuron_tuning(neuron,1)]); hold on;
 end
 
+neuron_tuning = smoothdata(neuron_tuning, 'gaussian', 4);
 
 
 %% test on data to predict direction of movement
@@ -103,28 +104,68 @@ end
 % select trial to test
 N_trial_test = size(trial_test, 1);
 
-n = 10;
+n = 11;
 k= floor(rand*8)+1;
-
+% k = 7;
+% t = floor(rand*size(spikes, 2)) + 1;
+t= 500;
 neuron_list = 1:N_neuralunits;
 
 spikes = trial_test(n, k).spikes;
 
-t = floor(rand*size(spikes, 2)) + 1;
+
 spikes = spikes(:, 1:t); % try on limited time data 
 
 % get average rate for each neuron
-neuron_resp = sum(spikes, 2)/ t;
+neuron_resp = sum(spikes, 2)/ size(spikes,2);
 
 % initialize population difference
-fa = zeros(1, N_neuralunits);
+
+[Max_tune, I] = max(neuron_tuning, [], 2);
+
+fa = neuron_resp./ Max_tune;   % size 98x1
+
+% vector 98x2 contraining directions of tuning
+tune_vect_list = unit_vect_list(:,I)'; 
+
+orientation_vect = ones(1, size(fa,1))*(fa.*tune_vect_list);
+
+dir = atan(orientation_vect(2)/orientation_vect(1))
 
 
 
-% for neuron = neuron_list
-%     fa(neuron) = max(neuron_tuning(neuron,:)) * (cos(neuron_resp(neuron)-max(neuron)))
-% end
+k_deduced = (180*dir/pi + 10)/40
+k
 
+fprintf("Error between real k and k deduced: %g\n", k-k_deduced);
+
+
+%% several trials
+k_list = 1:N_reaching_angles;
+n_list = 1:N_trial_test;
+t_list = [500];
+
+figure; hold on; grid on
+
+k_deduced = zeros(size(n_list,1), size(k_list,1));
+dir = zeros(size(n_list,1), size(k_list,1));
+
+for k =k_list
+    for n = n_list
+        spikes = trial_test(n,k).spikes;
+        dir(n,k) = position_estimation(spikes, neuron_tuning, unit_vect_list);
+        if dir(n,k)<0
+            dir(n,k) = dir(n,k)+2*pi;
+        end
+        k_deduced(n,k) = (180*dir(n,k)/pi + 10)/40;
+    end 
+    plot(n_list, abs(dir(:,k)-theta(k)), 'DisplayName', "k="+k); hold on;
+end
+xlabel('n');
+ylabel('Error in estimation of k');
+
+
+legend;
 
 
 

@@ -21,7 +21,7 @@ function [neuron_tuning_dir_k_mean, neuron_tuning_dir_k_std] = neuron_tuning_dir
 
     
 
-    neuron_spikes = neuron_spikes(:, 1:350);
+    neuron_spikes = neuron_spikes(:, 300:end);
     T = size(neuron_spikes, 2);
     Delt = T / N_bins;
 
