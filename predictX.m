@@ -12,7 +12,7 @@ all_psns = trial_averaged_hand_pos(axis, noTrials, binWidth);
 figure
 direction = 8;
 neuron = 5;
-time_axis = ([1:1:size(all_nrns{neuron, direction},2)]*binWidth)/1000;
+time_axis = ([1:1:size(all_nrns{neuron, direction},2)]*binWidth);
 binCenters = time_axis - 1/1000 + (binWidth/2000);
 bar(binCenters, all_nrns{neuron, direction})
 title("PSTH for Neuron " + neuron + " Direction k = " + direction)
@@ -20,7 +20,7 @@ ylabel("Spike Frequency (Hz)")
 xlabel("Time (ms)")
 %% X-direction tuning curves - set up data to create fitted tuning curve 
 
-tuning_curve_data = cell(98,8);
+pre_300ms_tuning_curve_data = cell(98,8);
 for direction = [1:1:8]
     for neuron = [1:1:98]
         tuning_curve_temp = [];
@@ -30,19 +30,44 @@ for direction = [1:1:8]
         % magnitude of position 
         % second row will contain corresponding spike data 
         
-        tuning_curve_temp(1,:) = all_psns{direction}; % x-position data
-        tuning_curve_temp(2,:) = all_nrns{neuron, direction}; % corresponding spike data
+        tuning_curve_temp(1,:) = all_psns{direction}(1:floor(299/binWidth)); % x-position data
+        tuning_curve_temp(2,:) = all_nrns{neuron, direction}(1:floor(299/binWidth)); % corresponding spike data
         [~, order] = sort(tuning_curve_temp(1, :)); % sort 
         tuning_curve_temp = tuning_curve_temp(:, order);
        
-        tuning_curve_data{neuron, direction} = tuning_curve_temp(1:2,:); 
+        pre_300ms_tuning_curve_data{neuron, direction} = tuning_curve_temp(1:2,:); 
 
 %         plot(tuning_curve_data((2*direction)-1,:), tuning_curve_data(2*direction,:),'.')
 %         hold on 
     end
 end
 
+post_300ms_tuning_curve_data = cell(98,8);
+for direction = [1:1:8]
+    for neuron = [1:1:98]
+        tuning_curve_temp = [];
+
+        % create cell array for tuning curve data - allows for differing data lengths 
+        % first row  in each cell will contain x-position data, sorted in increasing
+        % magnitude of position 
+        % second row will contain corresponding spike data 
+        
+        tuning_curve_temp(1,:) = all_psns{direction}(ceil(299/binWidth):end); % x-position data
+        tuning_curve_temp(2,:) = all_nrns{neuron, direction}(ceil(299/binWidth):end); % corresponding spike data
+        [~, order] = sort(tuning_curve_temp(1, :)); % sort 
+        tuning_curve_temp = tuning_curve_temp(:, order);
+       
+        post_300ms_tuning_curve_data{neuron, direction} = tuning_curve_temp(1:2,:); 
+
+%         plot(tuning_curve_data((2*direction)-1,:), tuning_curve_data(2*direction,:),'.')
+%         hold on 
+    end
+end
 %% Code here used to visualise fit of polynomials of different order. n = 12 seems a reasonable compromise for use for tuning curves
+% uncomment relevant desired time period
+% tuning_curve_data = pre_300ms_tuning_curve_data;
+tuning_curve_data = post_300ms_tuning_curve_data;
+
 direction = 1;
 i = 1;
 figure
@@ -81,12 +106,12 @@ fitted_tuning_curves = cell(98, 8);
 n = 12; % polynomial fit order
 for direction = [1:1:8]
     for neuron = [1:1:98]
-        yFit = zeros(1,size(tuning_curve_data{neuron, direction}, 2));
+        yFit = zeros(1,size(pre_300ms_tuning_curve_data{neuron, direction}, 2));
         counter = 1;
         index = n;
-        p = polyfit(tuning_curve_data{neuron, direction}(1,:),tuning_curve_data{neuron, direction}(2,:),n);
+        p = polyfit(pre_300ms_tuning_curve_data{neuron, direction}(1,:),pre_300ms_tuning_curve_data{neuron, direction}(2,:),n);
         while index >= 0
-            yFit = yFit + tuning_curve_data{neuron, direction}(1,:).^index*p(counter);
+            yFit = yFit + pre_300ms_tuning_curve_data{neuron, direction}(1,:).^index*p(counter);
             index = index - 1;
             counter = counter + 1;
         end
