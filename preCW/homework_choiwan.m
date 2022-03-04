@@ -1,4 +1,6 @@
 %% Initialisation
+% for tuning curves only, run this first section, the run the final section
+% (5)
 
 close all
 load('monkeydata_training.mat');
@@ -78,16 +80,18 @@ plot(1:T, count)
 % xlim([300 572])
 xlabel('Time / bins')
 ylabel('Firing rate')
-title('PSTH')
+title('PSTH, one trial')
 
 %% averaged across trials
 % uses smoothfilter() with Gaussian filtering
 
-k = 1;
+k = 8;
 i = 10;
 total_spikes = zeros(1,N);
 T_max = 0;
 T_temp = 0;
+
+% find number of zeros to pad
 for k=1:8
     for n=1:N
         T_temp = size(trial(n,k).spikes(i,:),2);
@@ -95,6 +99,8 @@ for k=1:8
     end
 end
 spikes_padded = zeros(N, T_max);
+
+% pad every dataset with zeros
 for k=1:8
     for n=1:N
         spikes_cur = trial(n,k).spikes(i,:);
@@ -103,17 +109,22 @@ for k=1:8
             spikes_padded(n,:) = cat(2, spikes_cur, zeros([1 T_max-T_cur]));
         end
     end
+end
 
+% plot PSTH
 total_spikes = sum(spikes_padded);
 rates = total_spikes/T_max;
 rates_smooth = smoothdata(rates,'gaussian', 100);
+% subplot(2,1,1)
+% plot(1:T_max, rates)
+% subplot(2,1,2)
+% plot(1:T_max, rates_smooth)
+figure
 subplot(2,1,1)
-plot(1:T_max, rates)
+plot(300:T_max-100, rates(300:T_max-100))
 subplot(2,1,2)
-plot(1:T_max, rates_smooth)
-% plot(300:T_max-100, rates(300:T_max-100))
-% hold on
-% plot(300:T_max-100, rates_smooth(300:T_max-100))
+plot(300:T_max-100, rates_smooth(300:T_max-100))
+title('PSTH, all trials')
 
 %% 4) Hand positions for different trials
 % Plots x,y,z coordinate projections individually
@@ -139,13 +150,30 @@ end
 % slightly in shape.
 
 %% 5) Tuning curves for several neurons
+close all
 
-k = 1;
-i = 1;
 start_t = 300;
 end_t = -100;
-cur_T = size(trial(n,k).spikes(i,:),2);
-num_counts = sum(trial(:,k).spikes(start_t:cur_T+end_t),2);
+
+legend_array = [];
+figure
+for i=1:98
+    tunings = p2t(trial,i);
+    %tunings_all(i,:) = tunings;
+
+    % threshold - comment out to plot all 98 neurons
+    if (range(tunings) > 0.005) & (min(tunings) > 0.02)
+        legend_array = [legend_array; i];
+        plot(1:K, tunings,'DisplayName',txt);
+        hold on
+    end
+end
+legendStrings = "i = " + string(legend_array);
+legend(legendStrings)
+title('All tuning curves')
+
+% cur_T = size(trial(n,k).spikes(i,:),2);
+% num_counts = sum(trial(:,k).spikes(start_t:cur_T+end_t),2);
 
 % i = 1;
 % tunings = zeros(K);
@@ -158,4 +186,27 @@ num_counts = sum(trial(:,k).spikes(start_t:cur_T+end_t),2);
 %     tunings(k) = avg_rate;
 % end
 
-% to finish
+function tunings = p2t(trial,i)
+    K=8;
+    N=100;
+    T_max=975;
+    spikes_padded = zeros(K, N, T_max);
+
+    for k=1:K
+        for n=1:N
+            spikes_cur = trial(n,k).spikes(i,:);
+            T_cur = size(spikes_cur,2);
+            if (T_cur<T_max)
+                spikes_padded(k,n,:) = cat(2, spikes_cur, zeros([1 T_max-T_cur]));
+            end
+        end
+    end
+    
+    total_spikes = sum(spikes_padded,3);
+    rates = total_spikes/T_max;
+    rates_smooth = smoothdata(rates,'gaussian', 3);
+    tunings = zeros(1,K);
+    for k=1:8
+        tunings(k) = mean(rates_smooth(k,:));
+    end
+end
