@@ -1,11 +1,11 @@
-function [avg_neurons, time_axis] = trial_averaged_neurons(noTrials, binWidth)
+function avg_neurons = trial_averaged_neurons(noTrials, binWidth)
 load('monkeydata_training.mat'); 
 % ---------------------------------------------------------------------- %   
     % Construct array that is the sum of the spike data of all of the 
     % trials at a certain direction for a certain neuron  
     
-    avg_neurons = []; % NOTE: tested and faster to assign empty than loop to preallocate to required size 
-    max_x = 1; 
+    avg_neurons = cell(98,8); 
+%     max_x = 1; 
     for direction_no = [1:1:8]
         for neuron_no = [1:1:98]
             x = trial(1, direction_no).spikes(neuron_no,:); 
@@ -25,16 +25,16 @@ load('monkeydata_training.mat');
                     r = sum(r);
                 end
             end
-            avg_neurons(((direction_no-1)*98)+neuron_no,1:length(r)) = (r/noTrials)*(1000/binWidth);
-            if size(x, 2) > max_x
-                max_x = size(x, 2);
-            % first 98 rows contain neuron data corresponding to direction
-            % 1, second 98 to direction 2, etc... i.e. 784 rows = 98
-            % neurons * 8 directions
-            end
+            avg_neurons{neuron_no,direction_no} = (r/noTrials)*(1000/binWidth);
+%             if size(x, 2) > max_x
+%                 max_x = size(x, 2);
+%             % first 98 rows contain neuron data corresponding to direction
+%             % 1, second 98 to direction 2, etc... i.e. 784 rows = 98
+%             % neurons * 8 directions
+%             end
         end
     end
-    time_axis = [1:binWidth:max_x]/1000;
+%     time_axis = [1:binWidth:max_x]/1000;
 end
     
             
