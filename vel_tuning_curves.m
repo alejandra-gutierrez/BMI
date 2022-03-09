@@ -5,7 +5,7 @@ binWidth = 5;
 
 %% X-Direction analysis 
 axis = 1; % X direction movement 
-axis = 2; % Y direction movement
+% axis = 2; % Y direction movement
 
 all_psns = trial_averaged_hand_pos(axis, noTrials, binWidth); 
     % average hand position taken over all trials
