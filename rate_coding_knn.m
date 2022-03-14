@@ -1,28 +1,32 @@
 %% 
+clear
+%%
 training_data = load('monkeydata_training.mat')
-training_data = training_data.trial
-window_size = 20 ;
+trial = training_data.trial
+window_size = 30;
   
 % Calc of velocity from position data. Change window size to reflect the length of interest
-[x_vel_points, y_vel_points,spike_train_binned]= getvel(training_data, window_size) ;
+[x_vel_points, y_vel_points,spike_train_binned]= getvel(trial, window_size) ;
 
-[trials,angle]=size(training_data);
+%% 
+[N_trials,N_angles] = size(trial);
 
 spikes = [];
 direction = [];
 
-neurons=length(training_data(1,1).spikes(:,1));
-spike_angle = zeros(trials,neurons);
+N_neurons=length(trial(1,1).spikes(:,1));
+spike_angle = zeros(N_trials,N_neurons);
 
-for a = 1:angle
-    for n = 1:neurons
-        for t = 1:trials
-                spikesnr = sum(training_data(t,a).spikes(n,1:320));
-                spike_angle(t,n) = spikesnr;
+
+for k = 1:N_angles
+    for neuron = 1:N_neurons
+        for n = 1:N_trials
+                spikesnr = sum(trial(n,k).spikes(neuron,1:320));
+                spike_angle(n, neuron) = spikesnr;
         end
     end
     spikes = [spikes; spike_angle];
-    angles(1:trials) = a;
+    angles(1:N_trials) = k;
     direction = [direction, angles];
 end
 
@@ -33,11 +37,8 @@ modelParameters.knn=knn;
 
 
 %%
-gscatter(spikes(:,:),direction,direction);
-
-
-
-
+figure;
+gscatter(spikes(:,:), direction,direction);
 
 
 
