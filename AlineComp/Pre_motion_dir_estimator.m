@@ -10,8 +10,8 @@ close all;
 load('monkeydata_training.mat');
 
 %% make a subset of original data for training
-trial_tr = trial(20:100, :); % subset of original data set
-trial_test = trial(1:19, :);  % subset of original data set for testing
+trial_tr = trial([1:20,41:100], :); % subset of original data set
+trial_test = trial(21:40, :);  % subset of original data set for testing
 
 % dimentions of data
 N_trials = size(trial_tr, 1);
@@ -93,11 +93,19 @@ for neuron = neuron_list
         [neuron_tuning_dir_k_mean, neuron_tuning_dir_k_std] = neuron_tuning_dir_k(trial_tr, neuron, k, N_bins);
         neuron_tuning(neuron, k) = neuron_tuning_dir_k_mean;
     end
+    neuron_tuning(neuron,:)=smoothdata(neuron_tuning(neuron,:), 'gaussian', 3.5);
     polarplot([theta, theta(1)], [neuron_tuning(neuron,:), neuron_tuning(neuron,1)]); hold on;
 end
+title('Tuning Curves for all neurons');
 
-neuron_tuning = smoothdata(neuron_tuning, 'gaussian', 4);
-
+figure;
+plot(theta, neuron_tuning(1:5:end,:)); hold on;
+set(gca,'XTick',0:pi/2:2*pi) 
+set(gca,'XTickLabel',{'0','\pi/2','\pi','3\pi/2','2\pi'})
+xlabel('\theta');
+ylabel('Neuron Response');
+title('Tuning Curves for all neurons');
+xlim([theta(1)-0.1,theta(end)+0.1]);
 
 %% test on data to predict direction of movement
 
@@ -108,7 +116,7 @@ n = 11;
 k= floor(rand*8)+1;
 % k = 7;
 % t = floor(rand*size(spikes, 2)) + 1;
-t= 500;
+t= 600;
 neuron_list = 1:N_neuralunits;
 
 spikes = trial_test(n, k).spikes;
@@ -117,18 +125,19 @@ spikes = trial_test(n, k).spikes;
 spikes = spikes(:, 1:t); % try on limited time data 
 
 % get average rate for each neuron
-neuron_resp = sum(spikes, 2)/ size(spikes,2);
+neuron_resp = sum(spikes, 2)/size(spikes,2)*1000;
 
 % initialize population difference
 
 [Max_tune, I] = max(neuron_tuning, [], 2);
-
-fa = neuron_resp./ Max_tune;   % size 98x1
+Min_tune = min(neuron_tuning, [],2);
+fa = (neuron_resp-Min_tune)./ (Max_tune-Min_tune);   % size 98x1
 
 % vector 98x2 contraining directions of tuning
 tune_vect_list = unit_vect_list(:,I)'; 
 
-orientation_vect = ones(1, size(fa,1))*(fa.*tune_vect_list);
+% orientation_vect = ones(1, size(fa,1))*(fa.*tune_vect_list);
+orientation_vect = sum(fa.*tune_vect_list,1)
 
 dir = atan(orientation_vect(2)/orientation_vect(1))
 
@@ -159,7 +168,7 @@ for k =k_list
         end
         k_deduced(n,k) = (180*dir(n,k)/pi + 10)/40;
     end 
-    plot(n_list, abs(dir(:,k)-theta(k)), 'DisplayName', "k="+k); hold on;
+    plot(n_list, abs(k_deduced(:,k)), 'DisplayName', "k="+k); hold on;
 end
 xlabel('n');
 ylabel('Error in estimation of k');
@@ -169,3 +178,4 @@ legend;
 
 
 
+plot(n_list, abs(k_deduced-k_list))
