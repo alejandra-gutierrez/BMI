@@ -134,8 +134,8 @@ title('PSTH, all trials')
 
 k = 1;
 figure
-for n=1:2
-    subplot(2,1,n)
+for n=1:8
+    subplot(4,2,n)
     for d=1:3
         hold on
         T_unique = size(trial(n,k).handPos(d,:),2);
@@ -156,21 +156,81 @@ start_t = 300;
 end_t = -100;
 
 legend_array = [];
+tunings_array = [];
 figure
+
+colours = ['b','r','g','y','m','c','k'];
+l = 1;
 for i=1:98
     tunings = p2t(trial,i);
     %tunings_all(i,:) = tunings;
 
     % threshold - comment out to plot all 98 neurons
-    if (range(tunings) > 0.005) & (min(tunings) > 0.02)
-        legend_array = [legend_array; i];
-        plot(1:K, tunings,'DisplayName',txt);
-        hold on
-    end
+    range = max(tunings) - min(tunings);
+%     if (range > 0.005) && (min(tunings) > 0.02)
+%         legend_array = [legend_array; i];
+%         tunings_array = [tunings_array; tunings];
+%         plot(1:K, tunings,colours(l),'DisplayName', num2str(i));
+%         l = l+1;
+%         hold on
+%     end
+    legend_array = [legend_array; i];
+    tunings_array = [tunings_array; tunings];
+    plot(1:K, tunings,'DisplayName', num2str(i));
+    hold on
 end
 legendStrings = "i = " + string(legend_array);
 legend(legendStrings)
 title('All tuning curves')
+
+tunings_array = normalize(tunings_array);
+C = cov(tunings_array);
+[V, D] = eig(C);
+last = size(V,2);
+F = [V(:,last) V(:,last-1)];
+
+% eigenvalues
+figure
+plot(8:-1:1, max(D)')
+
+% 2D PCA plot
+new_tunings_array = transpose(F) * transpose(tunings_array);
+figure
+scatter(new_tunings_array(1,:), new_tunings_array(2,:))
+hold on
+
+new_C = cov(transpose(new_tunings_array))
+[new_V,new_D] = eig(new_C)
+new_V = -new_V;
+new_D = -new_D;
+new_C = -new_C;
+for j=1:2
+    plot([0 new_V(1,j)], [0 new_V(2,j)], 'LineWidth', 2)
+    hold on
+end
+
+g_all = [];
+% 1D PCA plot
+figure
+for l=1:2
+    for j=1:size(new_tunings_array, 2)
+        size(V,2)+1-l
+        g = scatter(transpose(V(:,(size(V,2)+1-l)))*new_tunings_array(l,j), l, colours(j), 'filled');
+        if (l==2)
+            g_all = [g_all; g];
+        end
+        hold on
+    end
+end            
+legend(legendStrings)
+
+ylim([0 3])
+
+% PCA clustered dataset
+
+
+% clustering
+
 
 % cur_T = size(trial(n,k).spikes(i,:),2);
 % num_counts = sum(trial(:,k).spikes(start_t:cur_T+end_t),2);
