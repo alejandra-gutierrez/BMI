@@ -34,8 +34,8 @@ for i=1:I
     %tunings_all(i,:) = tunings;
 
     % threshold - include to plot only neurons that meet threshold
-    range = max(tunings) - min(tunings);
-%     if (range > 0.005) && (min(tunings) > 0.02)
+    tunings_range = max(tunings) - min(tunings);
+%     if (tunings_range > 0.005) && (min(tunings) > 0.02)
 %         legend_array = [legend_array; i];
 %         tunings_array = [tunings_array; tunings];
 %         plot(1:K, tunings,colours(l),'DisplayName', num2str(i));
@@ -58,7 +58,7 @@ title('All tuning curves')
 % iterations would be required
 close all
 % intiialise centroids - dummy neuron analogy
-clusters = 10;
+clusters = 5;
 min_tuning = min(tunings_array,[],1);
 max_tuning = max(tunings_array,[],1);
 centroids = zeros(clusters,K);
@@ -78,8 +78,8 @@ end
 % assign centroids to each neuron
 assigned_cluster = zeros(I,1);
 figure
-for iter=1:6
-    centroids
+for iter=1:8
+    centroids;
     for i=1:I
         centroid_dist = zeros(clusters,1); % temporarily store squared difference between each neuron and centroid
         for c=1:clusters
@@ -94,7 +94,7 @@ for iter=1:6
     end
     assigned_cluster;
     
-    subplot(3,2,iter)
+    subplot(5,2,iter)
     for i=1:98
         %scatter(1:K, tunings_array(i,:), colours(assigned_cluster(i)),'filled')
         plot(1:K, tunings_array(i,:), colours(assigned_cluster(i)))
@@ -110,6 +110,23 @@ for iter=1:6
     for c=1:length(clusters)
         members = find(assigned_cluster==c);
         centroids(c,:) = mean(tunings_array(members,:));
+    end
+end
+
+features = zeros(clusters,1);
+for c=1:clusters
+    members = find(assigned_cluster==c)
+    ranges = zeros(size(members))
+    for m=1:length(members)
+        m;
+        ranges(m) = max(tunings_array(members(m),:))-min(tunings_array(members(m),:));
+    end
+    ranges
+    chosen_one = find(ranges==max(ranges));
+    if (isempty(chosen_one))
+        features(c) = 0;
+    else
+        features(c) = members(chosen_one);
     end
 end
 
