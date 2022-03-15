@@ -63,6 +63,7 @@ errorbar(k_list, neuron_tuning, neuron_tuning_std);
 xlabel('k');
 ylabel('Average firing rate');
 title("Neuron unit ="+n_unit);
+ylim([0,inf]);
 
 % f_tuning = fit(k_list', neuron_tuning', 'gauss1');
 % plot(f_tuning);
@@ -116,7 +117,7 @@ n = 11;
 k= floor(rand*8)+1;
 % k = 7;
 % t = floor(rand*size(spikes, 2)) + 1;
-t= 600;
+t= 300;
 neuron_list = 1:N_neuralunits;
 
 spikes = trial_test(n, k).spikes;
@@ -137,7 +138,8 @@ fa = (neuron_resp-Min_tune)./ (Max_tune-Min_tune);   % size 98x1
 tune_vect_list = unit_vect_list(:,I)'; 
 
 % orientation_vect = ones(1, size(fa,1))*(fa.*tune_vect_list);
-orientation_vect = sum(fa.*tune_vect_list,1)
+orientation_vect = sum(fa.*tune_vect_list,1);
+orientation_vect = orientation_vect ./ sqrt(orientation_vect(1)^2+orientation_vect(2)^2)
 
 dir = atan(orientation_vect(2)/orientation_vect(1))
 
@@ -171,11 +173,11 @@ for k =k_list
     plot(n_list, abs(k_deduced(:,k)), 'DisplayName', "k="+k); hold on;
 end
 xlabel('n');
-ylabel('Error in estimation of k');
+ylabel('Estimation of k');
 
 
 legend;
 
 
 
-plot(n_list, abs(k_deduced-k_list))
+plot(n_list, abs(k_deduced))
