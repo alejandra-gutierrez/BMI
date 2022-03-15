@@ -43,10 +43,10 @@ all_psns = trial_averaged_hand_pos(axis, noTrials, binWidth); % average hand pos
 x_pos_weights = linearRegression(direction, all_nrns, all_psns); % Perform Linear Regression to get weights for predicting x-position
 u = [];
 
-for i = [1:1:length(trial(100,direction).spikes(1,:))]
+for i = [1:1:length(trial(testTrial,direction).spikes(1,:))]
     for k = [1:1:98]
-        p = p + x_pos_weights(k)*trial(100,direction).spikes(k,i);
-        u(:, k) = trial(100,direction).spikes(k,:);
+        p = p + x_pos_weights(k)*trial(testTrial,direction).spikes(k,i);
+        u(:, k) = trial(testTrial,direction).spikes(k,:);
     end
     pred_x_pos(i) = p - transpose(x_pos_weights)*transpose(u(i,:));
 end
@@ -103,9 +103,9 @@ end
 act_x_acc = [0, diff(act_x_vel)./diff([1:1:length(act_x_vel)])];
 
 figure
-plot(pred_x_vel)
+plot(pred_x_acc)
 hold on 
-plot(act_x_vel)
+plot(act_x_acc)
 xlabel("Time (ms)")
 ylabel("X Acceleration")
 title("Direction k = " + direction)
