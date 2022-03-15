@@ -42,7 +42,7 @@ pred_x_pos = zeros(1, length(test_data{1, direction}));
 all_psns = trial_averaged_hand_pos(axis, noTrials, binWidth); % average hand position taken over all trials
 x_pos_weights = linearRegression(direction, all_nrns, all_psns); % Perform Linear Regression to get weights for predicting x-position
 u = [];
-
+p = 0;
 for i = [1:1:length(trial(testTrial,direction).spikes(1,:))]
     for k = [1:1:98]
         p = p + x_pos_weights(k)*trial(testTrial,direction).spikes(k,i);
