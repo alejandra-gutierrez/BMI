@@ -21,8 +21,8 @@ function spike_rates = get_spike_rates2(trials, windowsize)
             spike_rates{n, k} = zeros(N_neurons, timesteps);
             
             for neuron = 1:N_neurons
-                for t = floor(1+windowsize/2:timesteps-windowsize/2)
-                    rate = sum(spikes(neuron, t-ceil(windowsize/2):t+floor(windowsize/2)));
+                for t = 1+windowsize:1:timesteps
+                    rate = sum(spikes(neuron, t-windowsize+1:t));
                     rate = rate/windowsize*1000;
                     spike_rates{n, k}(neuron, t) = rate;
                 end
