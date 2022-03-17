@@ -33,11 +33,10 @@ Vs = V(:, ind);
 
 figure; plot(diag(Ds));
 
-th_percent = 12;
+th_percent = 15;
 Is = find(diag(Ds)<max(Ds,[],'all')/th_percent);
 M = Is(1);
 V_red = Vs(:,1:M); % principal component vectors
-
 
 % dimentionality reduction by using M-dim representation of the L=98-dim
 % input

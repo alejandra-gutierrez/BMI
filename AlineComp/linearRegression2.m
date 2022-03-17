@@ -46,8 +46,10 @@ function neuron_weights = linearRegression2(training_input, training_output, axi
 
     % linearize arrays in time and trials
     training_input2 = zeros(N_neurons, N_trials*t_max_all);
+
     size(training_output)
     size(training_input)
+
     for n=1:size(training_input,1)
         spikes_trial = training_input{n};
         spikes_trial(N_neurons, t_max_all) =0; % zeros padding
@@ -68,6 +70,9 @@ function neuron_weights = linearRegression2(training_input, training_output, axi
     else
         disp("All good so far....");
     end
+    
+    whos training_input2
+    whos training_output
 
     figure;
     plot(training_output);
@@ -75,13 +80,13 @@ function neuron_weights = linearRegression2(training_input, training_output, axi
     plot(training_input2');
 
     % Let's get to business!
-    weights = []; % initialize weights that will be assigned to each input variable
+    neuron_weights = []; % initialize weights that will be assigned to each input variable
     % weights linearly relate input variables to output variables
     
     % U is the input matrix
     % rows are input vectors u from the training set
-    
-    weights = (training_input2'*training_input2)^-1*training_input2*training_output;
+    training_input = training_input2';
+    neuron_weights = (training_input'*training_input)^(-1)*training_input'*training_output;
 
 
 end
