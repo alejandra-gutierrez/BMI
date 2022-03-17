@@ -14,7 +14,12 @@ function neuron_weights = linearRegression2(training_input, training_output, dir
     % We can also input an averaged spike rate
     [N_trials, N_angles] = size(training_input);
     N_neurons = size(training_input{1}, 1);
-    if ~exist('dir', 'var') || isempty(dir)
+
+    fprintf("output size"); disp(size(training_output));
+    fprintf("input size:"); disp(size(training_input));
+
+    
+    if ~exist('dir', 'var') || isempty(dir) || dir == 0
         % do we want to use prior assumption on direction of movemnet?
         % % if dir undefined: make cell vector linear(instead of 2D for each dir)!
         % and then make mean!!
@@ -51,12 +56,12 @@ function neuron_weights = linearRegression2(training_input, training_output, dir
     % linearize arrays in time and trials
     training_input2 = zeros(N_neurons, N_trials*t_max_all);
 
-    size(training_output)
-    size(training_input)
+    fprintf("output size"); disp(size(training_output));
+    fprintf("input size:"); disp(size(training_input));
 
     for n=1:size(training_input,1)
         spikes_trial = training_input{n};
-        spikes_trial(N_neurons, t_max_all) =0; % zeros padding
+        spikes_trial(N_neurons, t_max_all) = 0; % zeros padding
         %size(spikes_trial)
         training_input2(:, 1+(n-1)*t_max_all : n*t_max_all) = spikes_trial;
     end

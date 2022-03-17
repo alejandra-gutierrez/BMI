@@ -9,7 +9,7 @@ function spike_rate_all_trials = make_av_spike_rate(spike_rates, dir)
     [N_trials, N_angles] = size(spike_rates);
     N_neurons = size(spike_rates{1}, 1);
     
-    if ~exist('dir', 'var') || isempty(dir)
+    if ~exist('dir', 'var') || isempty(dir) || dir == 0
         spike_rates = spike_rates(:); % no determined direction
         dir = 1;
     end
