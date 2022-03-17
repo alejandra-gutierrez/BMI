@@ -1,4 +1,4 @@
-function neuron_weights = linearRegression2(training_input, training_output, axis, dir)
+function neuron_weights = linearRegression2(training_input, training_output, dir)
     % axis: 1, 2, 3 for x, y, z respectively
     
     % does not assume prior knowledge on direction of motion
@@ -39,7 +39,7 @@ function neuron_weights = linearRegression2(training_input, training_output, axi
     end
 
     if (size(training_input, 1) ~= size(training_output, 1))
-        error("wrong size!\nSize output:%g\nSize input: %g", size(training_output,1), size(training_input2,2));
+        error("wrong size!\nSize output:%g\nSize input: %g", size(training_output,1), size(training_input,2));
     end
 
     t_max_all = size(training_output, 2);
@@ -58,11 +58,6 @@ function neuron_weights = linearRegression2(training_input, training_output, axi
     end
     training_output = reshape(training_output', [size(training_output,1)*t_max_all, 1]);
     % flatten array back to back
-    
-    figure;
-    plot(training_output);
-    figure;
-    plot(training_input2');
 
     if (length(training_output) ~= size(training_input2, 2))
         
@@ -74,10 +69,10 @@ function neuron_weights = linearRegression2(training_input, training_output, axi
     whos training_input2
     whos training_output
 
-    figure;
-    plot(training_output);
-    figure;
-    plot(training_input2');
+%     figure;
+%     plot(training_output);
+%     figure;
+%     plot(training_input2');
 
     % Let's get to business!
     neuron_weights = []; % initialize weights that will be assigned to each input variable
