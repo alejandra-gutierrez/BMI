@@ -19,22 +19,26 @@ function neuron_weights = linearRegression2(training_input, training_output, dir
         % % if dir undefined: make cell vector linear(instead of 2D for each dir)!
         % and then make mean!!
         % otherwise select only dir valid (and will be linear vect)
-        if size(training_input, 2)>1
-            training_input = training_input(:);
+
+        dir = 1;
+        if size(training_input, 2)>1 % only resize if needed
+            training_input = training_input(:); % no specific direction: linearize from [N_trials x N_angles] to [K x 1] cell array
         end
-        if size(training_output, 2) >1
+        % new format is a [N_trials*N_angles x 1] cell containing [M x t_max_each] matrices 
+                
+        if size(training_output, 2) > 1
             [M,N,P] = size(training_output);
             training_output = reshape(training_output, [N*M, P]);
-            % new size: vel_axis = [N_trial*N-angles x max_t] 
+                % new size: vel_axis = [N_trial*N_angles x max_t] 
         end        
-    else
-        if size(training_input, 2)>1 % select correct dir only
+    else    % we have a defined desired direction and make linear
+        if size(training_input, 2)> 1 % select correct dir only if needed
             training_input = training_input(:, dir);
-            % new size: [N_trials x 1] cell, [N_neurons x t_max_each]
+                % new size: [N_trials x 1] cell, [N_neurons x t_max_each]
         end
         if size(training_output, 2) > 1 % select correct dir only and squeeze matrix shape
             training_output = squeeze(training_output(:, dir, :));
-            % new size: [N_trials x max_t]
+                % new size: [N_trials x max_t]
         end
     end
 
