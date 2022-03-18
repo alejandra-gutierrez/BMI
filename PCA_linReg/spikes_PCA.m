@@ -2,7 +2,7 @@ function [principal_spikes, Vs, Ds, M] = spikes_PCA(spike_rate, cutoff)
     % function:
     % input:
     %    spike rates
-    %       format: 
+    %       format: [N_neurons x t]
     %   cutoff - 0 < proportion < 1
     %       cutoff to decide how many significant eigenvalues
     % output:

@@ -53,8 +53,8 @@ handPos_estimated_y = zeros(size(vely_estimated));
 for k_it = 1:N_angles
     for n_it = 1:N_trials_test
         for t = t_mvt:size(velx_estimated, 3)
-            handPos_estimated_x(n_it, k_it, t) = sum(velx_estimated(n_it, k_it, t_mvt:t))/windowsize*2;
-            handPos_estimated_y(n_it, k_it, t) = sum(vely_estimated(n_it, k_it, t_mvt:t)/windowsize*2);
+            handPos_estimated_x(n_it, k_it, t) = sum(velx_estimated(n_it, k_it, t_mvt:t));
+            handPos_estimated_y(n_it, k_it, t) = sum(vely_estimated(n_it, k_it, t_mvt:t));
         end
         % correct for initial hand position (known)
         handPos_estimated_x(n_it, k_it, :) = handPos_estimated_x(n_it, k_it, :) + trials_test(n_it, k_it).handPos(1, 1);

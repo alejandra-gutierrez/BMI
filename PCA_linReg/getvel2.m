@@ -1,7 +1,12 @@
-function [x_vel, y_vel, z_vel] = getvel2(trials , windowsize)
+function [x_vel, y_vel, z_vel] = getvel2(trials , windowsize, t_step)
 
 % x_vel: [max_t x N_trials x N_angles]
 
+if ~exist('t_step', 'var') || isempty(t_step)
+        t_step = 1;
+elseif t_step <=0
+    t_step = floor(windowsize/2);
+end
 
 [N_trials, N_angles] = size(trials);
 N_neurons = size(trials(1,1).spikes, 1);
@@ -19,10 +24,10 @@ for n = 1:N_trials
         if timesteps>max_t
             max_t = timesteps;
         end
-        for t = 1+windowsize:1:timesteps
-            x_vel(n, k, t) = handPos(1,t)- handPos(1,t-windowsize+1);
-            y_vel(n, k, t) = handPos(2,t)- handPos(2,t-windowsize+1);
-            z_vel(n, k, t) = handPos(3,t)- handPos(3,t-windowsize+1);
+        for t = windowsize:t_step:timesteps
+            x_vel(n, k, t) = (handPos(1,t)- handPos(1,t-windowsize+1))/windowsize*2;
+            y_vel(n, k, t) = (handPos(2,t)- handPos(2,t-windowsize+1))/windowsize*2;
+            z_vel(n, k, t) = (handPos(3,t)- handPos(3,t-windowsize+1))/windowsize*2;
         end
     end
 
