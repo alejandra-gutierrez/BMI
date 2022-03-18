@@ -8,8 +8,8 @@
 data = load('monkeydata_training.mat');
 trial = data.trial;
 
-trials_tr = trial(1:80, :);
-trials_test = trial(81:end, :);
+trials_tr = trial(10:81, :);
+trials_test = trial([1:9,82:end], :);
 
 [N_trials, N_angles] = size(trial);
 N_neurons = size(trial(1,1).spikes, 1);
@@ -118,7 +118,7 @@ toc;
 
 fprintf("Starting linear Regression..."); tic;
 
-for k_it = 1:N_angles
+for k_it = 0:N_angles
     fprintf("Training model for k=%g ...\n", k_it);
     
     PCA_components_weights_x = linearRegression2(principal_spikes_tr, velx_tr, k_it)

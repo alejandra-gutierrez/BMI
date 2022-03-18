@@ -1,7 +1,7 @@
 %% Plot hand position
 
-disp_dir =5;
-disp_n = 10;
+disp_dir =7;
+disp_n = 6;
 
 [velx_test, vely_test, velz_test] = getvel2(trials_test, windowsize);
 
@@ -31,7 +31,7 @@ figure;
 subplot(1,2,1);
 hold on
 plot(trials_test(disp_n, disp_dir).handPos(1,:), 'DisplayName', 'Actual handPosx');
-plot(squeeze(handPos_estimated_x(disp_n, disp_dir, 1:t_max)/10), 'DisplayName', 'Estimated');
+plot(squeeze(handPos_estimated_x(disp_n, disp_dir, 1:t_max)), 'DisplayName', 'Estimated');
 xlabel('t (ms)');
 ylabel('Position x');
 title('Position estimation with PCA and Linear Regression',"(with Prior dir k knowledge), k="+disp_dir);
