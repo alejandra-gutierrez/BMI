@@ -75,7 +75,11 @@ for k_it=0:N_angles
     
 end
 
-
+%% Break the code and make model PCA all the same
+% for k_it = 1:N_angles
+%     model(k_it) = model(N_angles+1);
+% end
+%%
 figure; plot(principal_spikes');
 fprintf("done...")
 toc;
