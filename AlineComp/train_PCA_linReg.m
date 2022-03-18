@@ -2,8 +2,7 @@
 %% Aline BUAT
 % 17/03/2022
 
-clear
-close all
+
 
 %% open file and init variables
 data = load('monkeydata_training.mat');

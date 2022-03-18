@@ -53,8 +53,8 @@ handPos_estimated_y = zeros(size(vely_estimated));
 for k_it = 1:N_angles
     for n_it = 1:N_trials_test
         for t = t_mvt:size(velx_estimated, 3)
-            handPos_estimated_x(n_it, k_it, t) = sum(velx_estimated(n_it, k_it, t_mvt:t))/windowsize;
-            handPos_estimated_y(n_it, k_it, t) = sum(vely_estimated(n_it, k_it, t_mvt:t))/windowsize;
+            handPos_estimated_x(n_it, k_it, t) = sum(velx_estimated(n_it, k_it, t_mvt:t))/windowsize*2;
+            handPos_estimated_y(n_it, k_it, t) = sum(vely_estimated(n_it, k_it, t_mvt:t)/windowsize*2);
         end
         % correct for initial hand position (known)
         handPos_estimated_x(n_it, k_it, :) = handPos_estimated_x(n_it, k_it, :) + trials_test(n_it, k_it).handPos(1, 1);
@@ -74,6 +74,7 @@ plot(squeeze(velx_estimated(disp_n,disp_dir,:)), 'DisplayName', 'Estimated');
 xlabel('t (ms)');
 ylabel('Velocity x');
 title('Velocity estimation with PCA and linear Regression',"(with Prior dir k knowledge), k="+disp_dir);
+lgd = legend; lgd.Location='northwest';
 
 subplot(1,2,2);
 hold on
@@ -82,7 +83,7 @@ plot(squeeze(vely_estimated(disp_n, disp_dir,:)), 'DisplayName', 'Estimated');
 xlabel('t (ms)');
 ylabel('velocity y');
 title('Velocity estimation with PCA and linear Regression',"(with Prior dir k knowledge), k="+disp_dir);
-
+lgd = legend; lgd.Location='northwest';
 
 %% Plot hand position
 
@@ -94,7 +95,7 @@ plot(squeeze(handPos_estimated_x(disp_n, disp_dir, :)), 'DisplayName', 'Estimate
 xlabel('t (ms)');
 ylabel('Position x');
 title('Position estimation with PCA and Linear Regression',"(with Prior dir k knowledge), k="+disp_dir);
-legend;
+lgd = legend; lgd.Location='northwest';
 
 subplot(1,2,2);
 hold on
@@ -103,7 +104,7 @@ plot(squeeze(handPos_estimated_y(disp_n, disp_dir, :)), 'DisplayName', 'Estimate
 xlabel('t (ms)');
 ylabel('Position y');
 title('Position estimation with PCA and Linear Regression',"(with Prior dir k knowledge), k="+disp_dir);
-legend;
+lgd = legend; lgd.Location='northwest';
 
 %% Evaluate error
 

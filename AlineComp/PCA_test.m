@@ -61,13 +61,3 @@ input_rate = input_rate{1};
 % a is low-dimentional and decorrelated
 a = V_red'*(input_rate - spikes_bar);
 plot(a');
-
-
-
-%% Reconstitute original (reduced) input x
-x=[];
-for m = 1:M
-    x=x+a(m,:)*V_red(:,m);
-end
-
-
