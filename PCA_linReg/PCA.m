@@ -1,10 +1,10 @@
 function [PC, Vs, Ds, V_red, M] = PCA(U, M) 
     % M is the cutoff
-    % U is the input matrix [N_trials x N_neurons]
+    % U is the input matrix [N_neurons x N_trials]
 
-    A = cov(U); % should be 98x 98 -- check
+    A = cov(U'); % should be 98x 98 -- check
     
-    U_mean = mean(U,1);
+    U_mean = mean(U, 2);
     [V, D] = eig(A);
     [d, ind] = sort(diag(D));
     Ds = D(ind, ind);

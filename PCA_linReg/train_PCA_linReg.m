@@ -30,13 +30,12 @@ tic;
 
 fprintf("Finding spike rates and velocitites...")
 % get hand Velocities
-[velx_tr, vely_tr, velz_tr] = getvel2(trials_tr, windowsize);
-
+[velx_tr, vely_tr, velz_tr] = getvel2(trials_tr, windowsize, windowsize/2, t_mvmt_start);
 fprintf("Velocities done...");
 toc;
 % spike_rate format [n x k] cell with [N_neurons x t_max_each]
 % spike_rate = get_spike_rates2(trials_tr(:,dir), windowsize);
-spike_rate = get_spike_rates2(trials_tr, windowsize);
+spike_rate = get_spike_rates2(trials_tr, windowsize, windowsize/2, t_mvmt_start);
 
 fprintf("Spike Rate done...")
 toc;
@@ -49,14 +48,14 @@ fprintf("Extracting principal component vectors..."); tic;
 
 
 spike_rate_av_trials = make_av_spike_rate(spike_rate);
-[principal_spikes, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials(:, t_mvmt_start:end), 0.05);
+[principal_spikes, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials(:, :), 0.05);
 
 
 for k_it=0:N_angles
 
         % extract principal components from average:
     spike_rate_av_trials = make_av_spike_rate(spike_rate, k_it); % if k_it = 0 (make it a sum of all components, all dir)
-    [~, Vs, Ds, ~] = spikes_PCA(spike_rate_av_trials(:, t_mvmt_start:end), 0.05);
+    [~, Vs, Ds, ~] = spikes_PCA(spike_rate_av_trials(:, :), 0.05);
     
    
     if (k_it ==0)
@@ -102,7 +101,7 @@ for k_it = 1:size(spike_rate, 2)
         principal_spikes_tr{n, k_it} = V_red'*(spike_rate{n, k_it} - spikes_mean);
 
         % remove 1st 290s from training points (before mvt) and reduce time res
-        principal_spikes_tr{n, k_it} = principal_spikes_tr{n, k_it}(:, t_mvmt_start:round(windowsize/2):end); 
+%         principal_spikes_tr{n, k_it} = principal_spikes_tr{n, k_it}(:, t_mvmt_start:round(windowsize/2):end); 
         
         fprintf(".");
     end
@@ -110,10 +109,10 @@ for k_it = 1:size(spike_rate, 2)
 end
 
 
-% reduce res in velx, vely, velz
-velx_tr = velx_tr(:, :, t_mvmt_start:round(windowsize/2):end);
-vely_tr = vely_tr(:, :, t_mvmt_start:round(windowsize/2):end);
-velz_tr = velz_tr(:, :, t_mvmt_start:round(windowsize/2):end);
+% % reduce res in velx, vely, velz
+% velx_tr = velx_tr(:, :, t_mvmt_start:round(windowsize/2):end);
+% vely_tr = vely_tr(:, :, t_mvmt_start:round(windowsize/2):end);
+% velz_tr = velz_tr(:, :, t_mvmt_start:round(windowsize/2):end);
 
 
 fprintf("done...")
