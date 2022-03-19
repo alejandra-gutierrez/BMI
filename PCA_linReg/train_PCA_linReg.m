@@ -21,7 +21,7 @@ N_trials_test = size(trials_test, 1);
 % select direction for training
 dir = 5;
 windowsize = 26;
-t_mvmt_start = 50;
+t_mvmt_start = 200;
 t_step = windowsize/3;
 
 
@@ -99,7 +99,7 @@ for k_it = 1:size(spike_rate, 2)
         V_red = model(k_it).V_red;
         spikes_mean = mean(spike_rate{n, k_it}, 2);
         principal_spikes_tr{n, k_it} = V_red'*(spike_rate{n, k_it} - spikes_mean);
-
+        
         % remove 1st 290s from training points (before mvt) and reduce time res
 %         principal_spikes_tr{n, k_it} = principal_spikes_tr{n, k_it}(:, t_mvmt_start:round(windowsize/2):end); 
         
@@ -124,17 +124,18 @@ fprintf("Starting linear Regression..."); tic;
 for k_it = 0:N_angles
     fprintf("Training model for k=%g ...\n", k_it);
     
-    PCA_components_weights_x = linearRegression2(principal_spikes_tr, velx_tr, k_it)
+    PCA_components_weights_x = linearRegression2(principal_spikes_tr, velx_tr, k_it);
     fprintf("Done with x_axis...\n");
     toc
-    PCA_components_weights_y = linearRegression2(principal_spikes_tr, vely_tr, k_it)
+    PCA_components_weights_y = linearRegression2(principal_spikes_tr, vely_tr, k_it);
+    fprintf("done with y_axis...\n");
     if (k_it == 0)
         k_it = N_angles+1; % just for indexing of models
     end
     model(k_it).PCAweightsX = PCA_components_weights_x;
     model(k_it).PCAweightsY = PCA_components_weights_y;
     % PCA_components_weights_y = linearRegression2(principal_spikes_tr, vely)
-    fprintf("done with y_axis...\n");
+    
     toc;
 end
 
