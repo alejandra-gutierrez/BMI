@@ -5,13 +5,18 @@ function [x_vel, y_vel, z_vel] = getvel2(trials , windowsize, t_step, t_start)
 if ~exist('t_step', 'var') || isempty(t_step)
         t_step = 1;
 elseif t_step <=0
-    t_step = floor(windowsize/2);
+    t_step = ceil(windowsize/2);
 end
 if ~exist('t_start', 'var') || isempty(t_start) || t_start<1
     t_start = 1;
 end
-    
+  
 t_start = t_start - 1; % offset for iteration
+
+% make sure these are integers!
+t_start = floor(max([t_start, 0]));
+windowsize = ceil(windowsize) ;
+t_step = round(max([t_step, 1]));
 
 [N_trials, N_angles] = size(trials);
 N_neurons = size(trials(1,1).spikes, 1);
