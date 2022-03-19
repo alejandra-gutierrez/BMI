@@ -21,7 +21,7 @@ for k=1:8
     for n=1:80
         label((k-1)*80+n) = k;
         for neuron=1:98
-            rate(neuron, n*k)=sum(training_data(n,k).spikes(neuron, 1:300));
+            rate(neuron, (k-1)*80+n)=sum(training_data(n,k).spikes(neuron, 1:300));
         end
     end 
 end 
@@ -80,7 +80,7 @@ k_list = 1:8;
 theta = (40*k_list-10)/180*pi;
 unit_vect_list = [cos(theta); sin(theta)];
 
-nearest_vects = unit_vect_list(nearest_angles);
+nearest_vects = unit_vect_list(:, nearest_angles);
 predicted_vect = mean(nearest_vects, 1);
 
 ang = atan(predicted_vect(2)/predicted_vect(1)); % that's an angle

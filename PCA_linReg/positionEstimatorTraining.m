@@ -32,13 +32,13 @@ fprintf("Spike_Rate done...");
 toc;
 
 %% TRAIN KNN MODEL
-spikesr = 1;
+
 N_neighbours = 8;
 spikesr = zeros(N_angles*N_trials_tr, N_neurons);
 labels = zeros(1, N_angles*N_trials_tr);
 for k_it = 1:N_angles
     for n_it = 1:N_trials_tr
-            spikesr( (k_it-1)*N_trials_tr + n_it, :) = sum(training_data(n_it, k_it).spikes(:, 1:t_pre_mvt), 2)';           
+         spikesr( (k_it-1)*N_trials_tr + n_it, :) = sum(training_data(n_it, k_it).spikes(:, 1:t_pre_mvt), 2)';           
         labels( (k_it-1)*N_trials_tr + n_it) = k_it;
     end
 end
@@ -62,35 +62,33 @@ fprintf("Extracting Principal component vectors from data...");
 
 
 for k_it =0:N_angles
-spike_rate_av_trials = make_av_spike_rate(spike_rate, k_it);
-[~, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials, 0.05);
-dir = k_it;
-if k_it == 0
-    k_it = N_angles+1;
-    
-end
-
-V_red = Vs(:, 1:M);
-modelParameters(k_it).M = M; % keep same M for all
-modelParameters(k_it).dir = dir;
-modelParameters(k_it).Vs = Vs;
-modelParameters(k_it).Ds = Ds;
-modelParameters(k_it).V_red = V_red;
-
-for n_it = 1:N_trials_tr
-    if k_it == N_angles+1
-        for k = 1:N_angles
-            % make a specific array for non-specific training
-            spikes_mean = mean(spike_rate{n_it, k}, 2);
-            principal_spikes_0{n_it, k} = V_red'*(spike_rate{n_it, k}-spikes_mean);
-        end
-    else
-       spikes_mean = mean(spike_rate{n_it, k_it}, 2);
-       principal_spikes_tr{n_it, k_it} = V_red'*(spike_rate{n_it, k_it}-spikes_mean);
+    spike_rate_av_trials = make_av_spike_rate(spike_rate, k_it);
+    [~, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials, 0.05);
+    dir = k_it;
+    if k_it == 0
+        k_it = N_angles+1;
     end
-    fprintf(".");
-end
-fprintf("\n"); 
+    V_red = Vs(:, 1:M);
+    modelParameters(k_it).M = M; % keep same M for all
+    modelParameters(k_it).dir = dir;
+    modelParameters(k_it).Vs = Vs;
+    modelParameters(k_it).Ds = Ds;
+    modelParameters(k_it).V_red = V_red;
+
+    for n_it = 1:N_trials_tr
+        if k_it == N_angles+1
+            for k = 1:N_angles
+                % make a specific array for non-specific training
+                spikes_mean = mean(spike_rate{n_it, k}, 2);
+                principal_spikes_0{n_it, k} = V_red'*(spike_rate{n_it, k}-spikes_mean);
+            end
+        else
+           spikes_mean = mean(spike_rate{n_it, k_it}, 2);
+           principal_spikes_tr{n_it, k_it} = V_red'*(spike_rate{n_it, k_it}-spikes_mean);
+        end
+        fprintf(".");
+    end
+    fprintf("\n"); 
 end
 fprintf("Extracted PCA parameters.\n"); toc;
 
@@ -113,6 +111,7 @@ end
 fprintf("Finished Training.\n");
 toc;
 
+% log model parameters
 for k_it = 1:N_angles+1
     M = modelParameters(k_it).M;
     dir = modelParameters(k_it).dir;
@@ -121,9 +120,9 @@ for k_it = 1:N_angles+1
     Ds = modelParameters(k_it).Ds;
     wX = modelParameters(k_it).PCAweightsX;
     wY = modelParameters(k_it).PCAweightsY;
-fprintf("Model Parameters:dir=%g, M=%g,  size V_red=[%g, %g], size wX=[%g,%g], size wY=[%g,%g]\n",...
+    fprintf("Model Parameters:dir=%g, M=%g,  size V_red=[%g, %g], size wX=[%g,%g], size wY=[%g,%g]\n",...
     dir, M, size(V_red,1),size(V_red,2), size(wX,1), size(wX, 2), size(wY,1), size(wY, 2));
     
 end
-pause;
+
 end
