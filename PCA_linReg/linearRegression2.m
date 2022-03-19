@@ -15,8 +15,8 @@ function neuron_weights = linearRegression2(training_input, training_output, dir
     [N_trials, N_angles] = size(training_input);
     N_neurons = size(training_input{1}, 1);
 
-    fprintf("output size"); disp(size(training_output));
-    fprintf("input size:"); disp(size(training_input));
+%     fprintf("output size"); disp(size(training_output));
+%     fprintf("input size:"); disp(size(training_input));
 
     
     if ~exist('dir', 'var') || isempty(dir) || dir == 0
@@ -56,8 +56,8 @@ function neuron_weights = linearRegression2(training_input, training_output, dir
     % linearize arrays in time and trials
     training_input2 = zeros(N_neurons, N_trials*t_max_all);
 
-    fprintf("output size"); disp(size(training_output));
-    fprintf("input size:"); disp(size(training_input));
+%     fprintf("output size"); disp(size(training_output));
+%     fprintf("input size:"); disp(size(training_input));
 
     for n=1:size(training_input,1)
         spikes_trial = training_input{n};
@@ -75,8 +75,8 @@ function neuron_weights = linearRegression2(training_input, training_output, dir
         disp("All good so far....");
     end
     
-    whos training_input2
-    whos training_output
+%     whos training_input2
+%     whos training_output
 
 %     figure;
 %     plot(training_output);
