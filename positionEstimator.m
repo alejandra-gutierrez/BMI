@@ -70,7 +70,7 @@ function [x, y] = positionEstimator(test_data, modelParameters)
     M = modelParameters(dir).M;
     wX = modelParameters(dir).PCAweightsX;
     wY = modelParameters(dir).PCAweightsY;
-    fprintf("Model Parameters: M=%g,  size2 V_red=%g, size wX=[%g,%g]\n", M, size(V_red,2), size(wX,1), size(wX, 2));
+%     fprintf("Model Parameters: M=%g,  size2 V_red=%g, size wX=[%g,%g]\n", M, size(V_red,2), size(wX,1), size(wX, 2));
     spikes_mean = mean(spike_rates_test{m}, 2);
     principal_sr_test = V_red'*(spike_rates_test{m} - spikes_mean);
     
