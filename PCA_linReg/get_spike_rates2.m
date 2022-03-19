@@ -1,4 +1,4 @@
-function spike_rates = get_spike_rates2(trials, windowsize, t_step)
+function spike_rates = get_spike_rates2(trials, windowsize, t_step, t_start)
     % output size spike_rates: cell [N_trials x N_angles]
 %       each is a double, size [N_neurons  x (t_max_each/t_step)]
 
@@ -16,8 +16,12 @@ function spike_rates = get_spike_rates2(trials, windowsize, t_step)
     elseif t_step <=0
         t_step = floor(windowsize/2);
     end
-
+    if ~exist('t_start', 'var') || isempty(t_start)
+        t_start = 1;
+    end
     
+    t_start = t_start - 1; % offset for iteration
+
     spike_rates = cell(N_trials, N_angles);
     %spike_rates = zeros(1500, N_trials, N_angles, N_neurons);
     
@@ -25,14 +29,14 @@ function spike_rates = get_spike_rates2(trials, windowsize, t_step)
         for k = 1:N_angles
             spikes = trials(n,k).spikes;
             t_max = size(spikes, 2);
-            spike_rates{n, k} = zeros(N_neurons, t_max);
+            spike_rates{n, k} = zeros(N_neurons, ceil(t_max/t_step));
             
             for neuron = 1:N_neurons
-                for t = windowsize:t_step:t_max
+                for t = t_start+windowsize:t_step:t_max
 %                     rate = spikes(neuron, t-windowsize+1:t)*ones(windowsize,1)/windowsize*1000;
                     rate = sum(spikes(neuron, t-windowsize+1:t))/windowsize*1000;
 %                     rate = rate/windowsize*1000;
-                    spike_rates{n, k}(neuron, floor(t/t_step) ) = rate;
+                    spike_rates{n, k}(neuron, floor((t-t_start)/t_step) ) = rate;
 
                 end
             end
