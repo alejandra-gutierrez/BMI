@@ -13,7 +13,7 @@ function neuron_weights = linearRegression2(training_input, training_output, dir
     
     % We can also input an averaged spike rate
     [N_trials, N_angles] = size(training_input);
-    N_neurons = size(training_input{1}, 1);
+    
 
 %     fprintf("output size"); disp(size(training_output));
 %     fprintf("input size:"); disp(size(training_input));
@@ -46,13 +46,15 @@ function neuron_weights = linearRegression2(training_input, training_output, dir
                 % new size: [N_trials x max_t]
         end
     end
-
+    
     if (size(training_input, 1) ~= size(training_output, 1))
         error("wrong size!\nSize output:%g\nSize input: %g", size(training_output,1), size(training_input,2));
     end
-
+%     fprintf("input size(inside)");
+%     disp(size(training_input{1}));
+    N_neurons = size(training_input{1}, 1);
     t_max_all = size(training_output, 2);
-
+    
     % linearize arrays in time and trials
     training_input2 = zeros(N_neurons, N_trials*t_max_all);
 
@@ -69,14 +71,11 @@ function neuron_weights = linearRegression2(training_input, training_output, dir
     % flatten array back to back
 
     if (length(training_output) ~= size(training_input2, 2))
-        
         error("wrong size!\nSize output:%g\nSize input: %g", size(training_output,1), size(training_input2,2));
-    else
-        disp("All good so far....");
     end
-    
-%     whos training_input2
-%     whos training_output
+%     
+%     fprintf("input size2(inside)");
+%     disp(size(training_input2));
 
 %     figure;
 %     plot(training_output);

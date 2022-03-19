@@ -1,4 +1,4 @@
-function [x, y] = positionEstimator(test_data)
+function [x, y] = positionEstimator(test_data, modelParameters)
 
   % **********************************************************
   %
@@ -37,60 +37,52 @@ function [x, y] = positionEstimator(test_data)
   %             test_data.decodedHandPos = [2.3; 1.5]
   %             test_data.spikes = 98x340 matrix of spiking activity
   
+  test_data = test_data(:); % make sure test_data is linear for testing
+  N_trials_test = size(test_data, 1);
+  t_max = size(test_data(1).spikes, 2); % how long is the current run
   
-  t = size(test_data, 2); % current timestamp in ms from length of data
-  sc = 100; % distance scaling factor 
-  label = randperm(8,1); % predicted direction (random number generator)
-
-%   for i = [1:1:t]
-%       switch label
-%           case 1 % 30/180pi - 30deg
-%               dv = [sqrt(3),1]; % direction vector for this direction 
-%           case 2 % 70/180pi - 70deg
-%               dv = [1,2.7474774194546];
-%           case 3 % 110/180pi - 110deg
-%               dv = [-1,2.7475];
-%           case 4 % 150/180pi - 150deg 
-%               dv = [-sqrt(3),1];
-%           case 5 % 190/180pi - 190deg
-%               dv = [-1,-0.17633];
-%           case 6 % 230/180pi - 230deg
-%               dv = [-1,-1.19175];
-%           case 7 % 310/180pi - 310deg 
-%               dv = [1, -1.1917536075574];
-%           case 8 % 350/180pi - 350deg
-%               dv = [1, -0.17632698790564];
-%       end
-% 
-%       x(i) = (i/1000)*dv(1)*sc;
-%       y(i) = (i/1000)*dv(2)*sc;
-%   end
-  
-switch label
-    case 1 % 30/180pi - 30deg
-        dv = [sqrt(3),1]; % direction vector for this direction 
-    case 2 % 70/180pi - 70deg
-        dv = [1,2.7474774194546];
-    case 3 % 110/180pi - 110deg
-        dv = [-1,2.7475];
-    case 4 % 150/180pi - 150deg 
-        dv = [-sqrt(3),1];
-    case 5 % 190/180pi - 190deg
-        dv = [-1,-0.17633];
-    case 6 % 230/180pi - 230deg
-        dv = [-1,-1.19175];
-    case 7 % 310/180pi - 310deg 
-        dv = [1, -1.1917536075574];
-    case 8 % 350/180pi - 350deg
-        dv = [1, -0.17632698790564];
-end
-
-      x = (t/1000)*dv(1)*sc;
-      y = (t/1000)*dv(2)*sc;
-  
-  
-  
+  % hardcoded parameters
+  windowsize = 26; % time window for velocity and spike rate estimation
+  t_mvt = 290; % hand movement start
+    
+  spike_rates_test = get_spike_rates2(test_data, windowsize);
+    % this is a cell array of size [N_trials x 1]
+    % containing [N_neurons x t_max] spike rates
+  model_knn = modelParameters(9).knn;
   % ... compute position at the given timestep.
+  for m=1:N_trials_test
+    pos0 = test_data(m).startHandPos;   % [x; y]
+    test_data(m).decodedHandPos = [];
+    
+    % STEP 1: COMPUTE PREDICTED DIRECTION
+
+    % dir = knn_pred(spike_rates_test{m}, knn_model)
+    % dir = knn_pred(test_data, knn_model); % sth similar
+    sr = sum(test_data(m).spikes(:, 1:t_mvt), 2)';
+    dir = predict(model_knn, sr); % currently using toolbox
+    
+    fprintf("\nPredicted dir: %g\n", dir);
+    
+    %dir = 9; % non-specific direction for now
+
+    % STEP 2: COMPUTE CURRENT POSITION 
+    V_red = modelParameters(dir).V_red;
+    M = modelParameters(dir).M;
+    wX = modelParameters(dir).PCAweightsX;
+    wY = modelParameters(dir).PCAweightsY;
+    fprintf("Model Parameters: M=%g,  size2 V_red=%g, size wX=[%g,%g]\n", M, size(V_red,2), size(wX,1), size(wX, 2));
+    spikes_mean = mean(spike_rates_test{m}, 2);
+    principal_sr_test = V_red'*(spike_rates_test{m} - spikes_mean);
+    
+    velx_estimated = wX'*principal_sr_test;
+    vely_estimated = wY'*principal_sr_test;
+    x(m) = sum(velx_estimated(t_mvt:end)) + test_data(m).startHandPos(1);
+    test_data(m).decodedHandPos(1) =x;
+    y(m) = sum(vely_estimated(t_mvt:end)) + test_data(m).startHandPos(2);
+    test_data(m).decodedHandPos(2) = y;
+
+  end
+
   
   % Return Value:
   

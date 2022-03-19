@@ -51,9 +51,10 @@ function [modelParameters] = positionEstimatorTraining(training_data)
   %     single structure containing all the learned parameters of your
   %     model and which can be used by the "positionEstimator" function.
   
-  t_Start = tic;
+  t_start = tic;
+  tic;
   [N_trials_tr, N_angles] = size(training_data);
-  N_neurons = size(training_data(1), 1);
+    N_neurons = size(training_data(1).spikes, 1);
 
   windowsize = 26;
   t_mvt = 200;
@@ -61,21 +62,27 @@ function [modelParameters] = positionEstimatorTraining(training_data)
   t_step = windowsize/3;
 
   fprintf("Finding spike rates and velocities...");
-  [velx_tr, vely_tr, velz_tr] = getvel2(trials_tr, windowsize, t_step, t_mvt);
-  spike_rate = get_spike_rates2(trials_tr, windowsize, t_step, t_start);
+  [velx_tr, vely_tr, velz_tr] = getvel2(training_data, windowsize, t_step, t_mvt);
+  spike_rate = get_spike_rates2(training_data, windowsize, t_step, t_start);
   fprintf("Spike_Rate done...");
   toc;
   
   %% TRAIN KNN MODEL
   spikesr = 1;
+  N_neighbours = 8;
+  spikesr = zeros(N_angles*N_trials_tr, N_neurons);
+  labels = zeros(1, N_angles*N_trials_tr);
     for k_it = 1:N_angles
-        for n_it = 1:N_trials
-            spikesr((k_it-1)*N_trials + n_it) = sum()
-
+        for n_it = 1:N_trials_tr
+            spikesr( (k_it-1)*N_trials_tr + n_it, :) = sum(training_data(n_it, k_it).spikes(:, 1:t_pre_mvt), 2)';           
+            labels( (k_it-1)*N_trials_tr + n_it) = k_it;
         end
     end
-    model(9).knn = 1;
-
+    
+    knn = fitcknn(spikesr, labels);
+    for k_it = 1:N_angles+1
+        modelParameters(k_it).knn = knn;
+    end
 
   %% TRAIN POSITION ESTIMATOR
   fprintf("Extracting Principal component vectors from data...");
@@ -136,7 +143,8 @@ function [modelParameters] = positionEstimatorTraining(training_data)
     modelParameters(k_it).PCAweightsX = PCA_components_weights_x;
     modelParameters(k_it).PCAweightsY = PCA_components_weights_y;
   end
-
+fprintf("Finished Training.\n");
+toc;
   
 
 end
@@ -191,7 +199,7 @@ function [x, y] = positionEstimator(test_data, modelParameters)
   spike_rates_test = get_spike_rates2(test_data, windowsize);
     % this is a cell array of size [N_trials x 1]
     % containing [N_neurons x t_max] spike rates
-  
+  model_knn = modelParameters(9).knn;
   % ... compute position at the given timestep.
   for m=1:N_trials_test
     pos0 = test_data(m).startHandPos;   % [x; y]
@@ -200,7 +208,8 @@ function [x, y] = positionEstimator(test_data, modelParameters)
     % STEP 1: COMPUTE PREDICTED DIRECTION
     % dir = knn_pred(spike_rates_test{m}, knn_model)
     % dir = knn_pred(test_data, knn_model); % sth similar
-    dir = 9; % non-specific direction for now
+    dir = predict(model_knn, spike_rates_test{m}); % currently using toolbox
+    %dir = 9; % non-specific direction for now
 
     % STEP 2: COMPUTE CURRENT POSITION 
     V_red = modelParameters(dir).V_red;
