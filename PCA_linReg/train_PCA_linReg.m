@@ -22,7 +22,7 @@ N_trials_test = size(trials_test, 1);
 dir = 5;
 windowsize = 26;
 t_mvmt_start = 50;
-
+t_step = windowsize/3;
 
 
 %% Get velocities and rates
@@ -30,12 +30,12 @@ tic;
 
 fprintf("Finding spike rates and velocitites...")
 % get hand Velocities
-[velx_tr, vely_tr, velz_tr] = getvel2(trials_tr, windowsize, windowsize/2, t_mvmt_start);
+[velx_tr, vely_tr, velz_tr] = getvel2(trials_tr, windowsize, t_step, t_mvmt_start);
 fprintf("Velocities done...");
 toc;
 % spike_rate format [n x k] cell with [N_neurons x t_max_each]
 % spike_rate = get_spike_rates2(trials_tr(:,dir), windowsize);
-spike_rate = get_spike_rates2(trials_tr, windowsize, windowsize/2, t_mvmt_start);
+spike_rate = get_spike_rates2(trials_tr, windowsize, t_step, t_mvmt_start);
 
 fprintf("Spike Rate done...")
 toc;

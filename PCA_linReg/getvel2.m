@@ -30,9 +30,9 @@ for n = 1:N_trials
             max_t = timesteps;
         end
         for t = t_start+windowsize:t_step:timesteps
-            x_vel(n, k, floor((t-t_start)/t_step)) = (handPos(1,t)- handPos(1,t-windowsize+1))/windowsize*2;
-            y_vel(n, k, floor((t-t_start)/t_step)) = (handPos(2,t)- handPos(2,t-windowsize+1))/windowsize*2;
-            z_vel(n, k, floor((t-t_start)/t_step)) = (handPos(3,t)- handPos(3,t-windowsize+1))/windowsize*2;
+            x_vel(n, k, ceil((t-t_start)/t_step)) = (handPos(1,t)- handPos(1,t-windowsize+1))/windowsize*2;
+            y_vel(n, k, ceil((t-t_start)/t_step)) = (handPos(2,t)- handPos(2,t-windowsize+1))/windowsize*2;
+            z_vel(n, k, ceil((t-t_start)/t_step)) = (handPos(3,t)- handPos(3,t-windowsize+1))/windowsize*2;
             
         end
     end
