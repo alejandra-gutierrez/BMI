@@ -78,7 +78,7 @@ distTest = zeros(N_test, N_tr);
 % find distance to points from train data
 for t1 = 1:N_test
     for t2 = 1:N_tr
-        distTest(t1, t2) = sqrt(sum( (train_rates(t1, :)-train_rates(t2, :)).^2));
+        distTest(t1, t2) = sqrt(sum( (test_rates(t1, :)-train_rates(t2, :)).^2));
     end
 end
 
@@ -107,13 +107,14 @@ for row = 1:N_test
     
 end
 
-
-subplot(4,5, n_neighbours);
+figure;
+% subplot(4,5, n_neighbours);
 hold on;
-plot([1:N_test]/N_test*(N_angles),predicted_dir_test, 'DisplayName','knn deduction');
-plot([1:N_test]/N_test*(N_angles), k_deduced, 'DisplayName','using dir vectors');
+plot([1:N_test]/N_test*(N_angles),predicted_dir_test-labels_test, 'DisplayName','knn deduction');
+plot([1:N_test]/N_test*(N_angles), k_deduced - labels_test, 'DisplayName','using dir vectors');
 lgd = legend; lgd.Location = 'northwest';
 
-meanSqError(n_neighbours) = mean((predicted_dir_test - labels_test).^2)
+meanSqError(n_neighbours) = mean((predicted_dir_test - labels_test).^2);
 
+fprintf(".");
 

@@ -33,7 +33,7 @@ toc;
 
 %% TRAIN KNN MODEL
 
-N_neighbours = 8;
+n_neighbours = 12;
 spikesr = zeros(N_angles*N_trials_tr, N_neurons);
 labels = zeros(1, N_angles*N_trials_tr);
 for k_it = 1:N_angles
@@ -43,9 +43,12 @@ for k_it = 1:N_angles
     end
 end
 
-knn = fitcknn(spikesr, labels);
+% knn = fitcknn(spikesr, labels);
 for k_it = 1:N_angles+1
+    modelParameters(k_it).KNNSpikesr = spikesr;
+    modelParameters(k_it).KNNLabels = labels;
     modelParameters(k_it).knn = knn;
+    modelParameters(k_it).n_neighbours = n_neighbours;
 end
 
 %% TRAIN POSITION ESTIMATOR
