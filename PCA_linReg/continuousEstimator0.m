@@ -56,34 +56,41 @@ tic;
 [N_trials_tr, N_angles] = size(training_data);
 N_neurons = size(training_data(1).spikes, 1);
 
-windowsize = 26;
-t_mvt = 200;
-t_pre_mvt_KNN = 300;
+windowsize = 20;
+t_mvt = 210;
+t_pre_mvt = 300;
 t_step = windowsize/2;
-N_neighbours = 10;
+t_step = ceil(t_step);
+n_neighbours = 12;
+proportion = 2/100; % th for selection of principal components
 
-fprintf("Finding spike rates and velocities...");
-[velx_tr, vely_tr, velz_tr] = getvel2(training_data, windowsize, t_step, t_mvt);
+fprintf("\nFinding spike rates and velocities...");
+[velx_tr, vely_tr, ~] = getvel2(training_data, windowsize, t_step, t_mvt);
 spike_rate = get_spike_rates2(training_data, windowsize, t_step, t_mvt);
-fprintf("Spike_Rate done...");
+fprintf("Spike_Rate done...\n");
 toc;
 
 %% TRAIN KNN MODEL
 
-
+fprintf("Training KNN model...");
 spikesr = zeros(N_angles*N_trials_tr, N_neurons);
 labels = zeros(1, N_angles*N_trials_tr);
 for k_it = 1:N_angles
     for n_it = 1:N_trials_tr
-            spikesr( (k_it-1)*N_trials_tr + n_it, :) = sum(training_data(n_it, k_it).spikes(:, 1:t_pre_mvt_KNN), 2)';           
+         spikesr( (k_it-1)*N_trials_tr + n_it, :) = sum(training_data(n_it, k_it).spikes(:, 1:t_pre_mvt), 2)';           
         labels( (k_it-1)*N_trials_tr + n_it) = k_it;
     end
 end
 
-knn = fitcknn(spikesr, labels);
+% knn = fitcknn(spikesr, labels);
 for k_it = 1:N_angles+1
-    modelParameters(k_it).knn = knn;
+    modelParameters(k_it).KNNSpikesr = spikesr;
+    modelParameters(k_it).KNNLabels = labels;
+    % modelParameters(k_it).knn = knn;
+    modelParameters(k_it).n_neighbours = n_neighbours;
 end
+fprintf("KNN model done. "); toc;
+
 
 %% TRAIN POSITION ESTIMATOR
 fprintf("Extracting Principal component vectors from data...");
@@ -99,35 +106,33 @@ fprintf("Extracting Principal component vectors from data...");
 
 
 for k_it =0:N_angles
-spike_rate_av_trials = make_av_spike_rate(spike_rate, k_it);
-[~, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials, 0.05);
-dir = k_it;
-if k_it == 0
-    k_it = N_angles+1;
-    
-end
-
-V_red = Vs(:, 1:M);
-modelParameters(k_it).M = M; % keep same M for all
-modelParameters(k_it).dir = dir;
-modelParameters(k_it).Vs = Vs;
-modelParameters(k_it).Ds = Ds;
-modelParameters(k_it).V_red = V_red;
-
-for n_it = 1:N_trials_tr
-    if k_it == N_angles+1
-        for k = 1:N_angles
-            % make a specific array for non-specific training
-            spikes_mean = mean(spike_rate{n_it, k}, 2);
-            principal_spikes_0{n_it, k} = V_red'*(spike_rate{n_it, k}-spikes_mean);
-        end
-    else
-       spikes_mean = mean(spike_rate{n_it, k_it}, 2);
-       principal_spikes_tr{n_it, k_it} = V_red'*(spike_rate{n_it, k_it}-spikes_mean);
+    spike_rate_av_trials = make_av_spike_rate(spike_rate, k_it);
+    [~, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials, proportion);
+    dir = k_it;
+    if k_it == 0
+        k_it = N_angles+1;
     end
-    fprintf(".");
-end
-fprintf("\n"); 
+    V_red = Vs(:, 1:M);
+    modelParameters(k_it).M = M; % keep same M for all
+    modelParameters(k_it).dir = dir;
+    modelParameters(k_it).Vs = Vs;
+    modelParameters(k_it).Ds = Ds;
+    modelParameters(k_it).V_red = V_red;
+
+    for n_it = 1:N_trials_tr
+        if k_it == N_angles+1
+            for k = 1:N_angles
+                % make a specific array for non-specific training
+                spikes_mean = mean(spike_rate{n_it, k}, 2);
+                principal_spikes_0{n_it, k} = V_red'*(spike_rate{n_it, k}-spikes_mean);
+            end
+        else
+           spikes_mean = mean(spike_rate{n_it, k_it}, 2);
+           principal_spikes_tr{n_it, k_it} = V_red'*(spike_rate{n_it, k_it}-spikes_mean);
+        end
+        fprintf(".");
+    end
+    fprintf("\n"); 
 end
 fprintf("Extracted PCA parameters.\n"); toc;
 
@@ -147,9 +152,9 @@ for k_it = 0:N_angles
     modelParameters(k_it).PCAweightsX = PCA_components_weights_x;
     modelParameters(k_it).PCAweightsY = PCA_components_weights_y;
 end
-fprintf("Finished Training.\n");
-toc;
-
+fprintf("\n Done.\n");
+fprintf("Model Parameters:\n");
+% print model parameters
 for k_it = 1:N_angles+1
     M = modelParameters(k_it).M;
     dir = modelParameters(k_it).dir;
@@ -158,12 +163,14 @@ for k_it = 1:N_angles+1
     Ds = modelParameters(k_it).Ds;
     wX = modelParameters(k_it).PCAweightsX;
     wY = modelParameters(k_it).PCAweightsY;
-fprintf("Model Parameters:dir=%g, M=%g,  size V_red=[%g, %g], size wX=[%g,%g], size wY=[%g,%g]\n",...
+    fprintf("dir=%g, M=%g,  size V_red=[%g, %g], size wX=[%g,%g], size wY=[%g,%g]\n",...
     dir, M, size(V_red,1),size(V_red,2), size(wX,1), size(wX, 2), size(wY,1), size(wY, 2));
     
 end
-pause;
+fprintf("\nFinished Training.\n");
+toc; fprintf("\n");
 end
+
 
 
 function [x, y] = positionEstimator(test_data, modelParameters)
@@ -210,30 +217,50 @@ function [x, y] = positionEstimator(test_data, modelParameters)
   t_max = size(test_data(1).spikes, 2); % how long is the current run
   
   % hardcoded parameters
-  windowsize = 26; % time window for velocity and spike rate estimation
+  windowsize = 35; % time window for velocity and spike rate estimation
+  t_step = windowsize /2.5;
+  t_step = ceil(t_step); % prevent weirdness and unpredicatability
   t_mvt = 290; % hand movement start
-    
-  spike_rates_test = get_spike_rates2(test_data, windowsize);
+  t_start = 1;
+  
+  spike_rates_test = get_spike_rates2(test_data, windowsize, t_step, t_start); % time limiting step
     % this is a cell array of size [N_trials x 1]
-    % containing [N_neurons x t_max] spike rates
-  model_knn = modelParameters(9).knn;
+    % containing [N_neurons x t_max_each] spike rates
+  
+  %model_knn = modelParameters(9).knn;
+  model_KNNspikesr = modelParameters(9).KNNSpikesr;
+  model_KNNlabels = modelParameters(9).KNNLabels;
+  n_neighbours = modelParameters(9).n_neighbours;
+  N_KNN = size(model_KNNspikesr, 1);    %[N_trials*N_angles x N_neurons]
+
+
   % ... compute position at the given timestep.
   for m=1:N_trials_test
     pos0 = test_data(m).startHandPos;   % [x; y]
     test_data(m).decodedHandPos = [];
+    t_end = size(test_data(m).spikes, 2);
     
     % STEP 1: COMPUTE PREDICTED DIRECTION
-
-    % dir = knn_pred(spike_rates_test{m}, knn_model)
-    % dir = knn_pred(test_data, knn_model); % sth similar
-    sr = sum(test_data(m).spikes(:, 1:t_mvt), 2)';
-    dir = predict(model_knn, sr); % currently using toolbox
+    sr = sum(test_data(m).spikes(:, 1:t_mvt), 2)'; % [1 x N_neurons]
     
-    fprintf("\nPredicted dir: %g\n", dir);
+%     dir = predict(model_knn, sr); % using toolbox
     
-    %dir = 9; % non-specific direction for now
+    dist = zeros(1, size(model_KNNspikesr, 1)); 
+    for n_it = 1:N_KNN
+        dist(n_it) = sqrt(sum((sr - model_KNNspikesr(n_it, :)).^2));
+    end
+    [sortedDist, ind] = sort(dist, 2);
+    nearest_neighbours = ind(2:n_neighbours+1); % gives index in long list of which neighbour is close
+    
+    % gives the direction corresponding to this neighbour (from the label)
+    nearest_dirs(1:n_neighbours) = model_KNNlabels(nearest_neighbours); 
+    dir = mode(nearest_dirs(1:n_neighbours));  % find the most common value in the neighbourhood
 
+%     fprintf("\nPredicted dir: %g\n", dir);
+    
+    
     % STEP 2: COMPUTE CURRENT POSITION 
+    
     V_red = modelParameters(dir).V_red;
     M = modelParameters(dir).M;
     wX = modelParameters(dir).PCAweightsX;
@@ -242,12 +269,37 @@ function [x, y] = positionEstimator(test_data, modelParameters)
     spikes_mean = mean(spike_rates_test{m}, 2);
     principal_sr_test = V_red'*(spike_rates_test{m} - spikes_mean);
     
-    velx_estimated = wX'*principal_sr_test;
-    vely_estimated = wY'*principal_sr_test;
+    
+    t_red = t_start:t_step:t_end;
+    t_shift = [2:length(t_red), length(t_red)];
+    
+    L_pr = zeros(M, t_end);
+    
+    for it = 0:t_step-1
+        lin_elmt = (principal_sr_test(:, t_shift) - principal_sr_test)*it/t_step;
+        L_pr(:, t_red + it) = principal_sr_test + lin_elmt;  % linear interpolation
+    end
+%     for it = 0:t_step-1
+%         L_pr(:, t_red + it) = principal_sr_test; % very rough
+%         interpolation
+%     end
+    L_pr(:,t_end+1:end) = []; % remove possibly extra values
+    
+%     figure(1); hold off;
+%     plot(t_red, principal_sr_test, 'o'); hold on
+%     plot(1:t_end, L_pr);
+    
+    
+%     velx_estimated = wX'*principal_sr_test;
+%     vely_estimated = wY'*principal_sr_test;
+    velx_estimated = wX'*L_pr; 
+    vely_estimated = wY'*L_pr;
+    
+    x = 0; y=0;
     x(m) = sum(velx_estimated(t_mvt:end)) + test_data(m).startHandPos(1);
-    test_data(m).decodedHandPos(1) =x;
+    test_data(m).decodedHandPos(1) = x(m);
     y(m) = sum(vely_estimated(t_mvt:end)) + test_data(m).startHandPos(2);
-    test_data(m).decodedHandPos(2) = y;
+    test_data(m).decodedHandPos(2) = y(m);
 
   end
 

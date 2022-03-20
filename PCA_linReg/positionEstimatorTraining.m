@@ -21,21 +21,22 @@ tic;
 N_neurons = size(training_data(1).spikes, 1);
 
 windowsize = 20;
-t_mvt = 200;
+t_mvt = 210;
 t_pre_mvt = 300;
 t_step = windowsize/2;
 t_step = ceil(t_step);
 n_neighbours = 12;
+proportion = 2/100; % th for selection of principal components
 
-fprintf("Finding spike rates and velocities...");
+fprintf("\nFinding spike rates and velocities...");
 [velx_tr, vely_tr, ~] = getvel2(training_data, windowsize, t_step, t_mvt);
 spike_rate = get_spike_rates2(training_data, windowsize, t_step, t_mvt);
-fprintf("Spike_Rate done...");
+fprintf("Spike_Rate done...\n");
 toc;
 
 %% TRAIN KNN MODEL
 
-
+fprintf("Training KNN model...");
 spikesr = zeros(N_angles*N_trials_tr, N_neurons);
 labels = zeros(1, N_angles*N_trials_tr);
 for k_it = 1:N_angles
@@ -52,6 +53,8 @@ for k_it = 1:N_angles+1
     % modelParameters(k_it).knn = knn;
     modelParameters(k_it).n_neighbours = n_neighbours;
 end
+fprintf("KNN model done. "); toc;
+
 
 %% TRAIN POSITION ESTIMATOR
 fprintf("Extracting Principal component vectors from data...");
@@ -68,7 +71,7 @@ fprintf("Extracting Principal component vectors from data...");
 
 for k_it =0:N_angles
     spike_rate_av_trials = make_av_spike_rate(spike_rate, k_it);
-    [~, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials, 0.05);
+    [~, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials, proportion);
     dir = k_it;
     if k_it == 0
         k_it = N_angles+1;
@@ -113,10 +116,9 @@ for k_it = 0:N_angles
     modelParameters(k_it).PCAweightsX = PCA_components_weights_x;
     modelParameters(k_it).PCAweightsY = PCA_components_weights_y;
 end
-fprintf("Finished Training.\n");
-toc;
-
-% log model parameters
+fprintf("\n Done.\n");
+fprintf("Model Parameters:\n");
+% print model parameters
 for k_it = 1:N_angles+1
     M = modelParameters(k_it).M;
     dir = modelParameters(k_it).dir;
@@ -125,9 +127,10 @@ for k_it = 1:N_angles+1
     Ds = modelParameters(k_it).Ds;
     wX = modelParameters(k_it).PCAweightsX;
     wY = modelParameters(k_it).PCAweightsY;
-    fprintf("Model Parameters:dir=%g, M=%g,  size V_red=[%g, %g], size wX=[%g,%g], size wY=[%g,%g]\n",...
+    fprintf("dir=%g, M=%g,  size V_red=[%g, %g], size wX=[%g,%g], size wY=[%g,%g]\n",...
     dir, M, size(V_red,1),size(V_red,2), size(wX,1), size(wX, 2), size(wY,1), size(wY, 2));
     
 end
-
+fprintf("\nFinished Training.\n");
+toc; fprintf("\n");
 end

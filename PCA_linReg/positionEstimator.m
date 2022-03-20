@@ -83,7 +83,6 @@ function [x, y] = positionEstimator(test_data, modelParameters)
 
 %     fprintf("\nPredicted dir: %g\n", dir);
     
-    %dir = 9; % non-specific direction for now
     
     % STEP 2: COMPUTE CURRENT POSITION 
     
