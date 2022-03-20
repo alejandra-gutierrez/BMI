@@ -58,8 +58,9 @@ N_neurons = size(training_data(1).spikes, 1);
 
 windowsize = 26;
 t_mvt = 200;
-t_pre_mvt = 300;
-t_step = windowsize/3;
+t_pre_mvt_KNN = 300;
+t_step = windowsize/2;
+N_neighbours = 10;
 
 fprintf("Finding spike rates and velocities...");
 [velx_tr, vely_tr, velz_tr] = getvel2(training_data, windowsize, t_step, t_mvt);
@@ -68,13 +69,13 @@ fprintf("Spike_Rate done...");
 toc;
 
 %% TRAIN KNN MODEL
-spikesr = 1;
-N_neighbours = 8;
+
+
 spikesr = zeros(N_angles*N_trials_tr, N_neurons);
 labels = zeros(1, N_angles*N_trials_tr);
 for k_it = 1:N_angles
     for n_it = 1:N_trials_tr
-            spikesr( (k_it-1)*N_trials_tr + n_it, :) = sum(training_data(n_it, k_it).spikes(:, 1:t_pre_mvt), 2)';           
+            spikesr( (k_it-1)*N_trials_tr + n_it, :) = sum(training_data(n_it, k_it).spikes(:, 1:t_pre_mvt_KNN), 2)';           
         labels( (k_it-1)*N_trials_tr + n_it) = k_it;
     end
 end

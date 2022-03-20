@@ -25,7 +25,7 @@ function spike_rates = get_spike_rates2(trials, windowsize, t_step, t_start)
     % make sure these are integers!
     t_start = floor(max([t_start, 0]));
     windowsize = ceil(windowsize) ;
-    t_step = round(max([t_step, 1]));
+    t_step = ceil(max([t_step, 1]));
 
     spike_rates = cell(N_trials, N_angles);
     
