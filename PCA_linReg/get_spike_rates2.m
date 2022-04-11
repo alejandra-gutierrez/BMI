@@ -29,20 +29,22 @@ function spike_rates = get_spike_rates2(trials, windowsize, t_step, t_start)
 
     spike_rates = cell(N_trials, N_angles);
     
+    max_t = 0;
+
     for n = 1:N_trials
         for k = 1:N_angles
             spikes = trials(n,k).spikes;
-            t_max = size(spikes, 2);
-            spike_rates{n, k} = zeros(N_neurons, ceil(t_max/t_step));
+            timesteps = size(spikes, 2);
+            spike_rates{n, k} = zeros(N_neurons, ceil(timesteps/t_step));
             
-            for neuron = 1:N_neurons
-                for t = t_start+windowsize:t_step:t_max
-%                     rate = spikes(neuron, t-windowsize+1:t)*ones(windowsize,1)/windowsize*1000;
-                    rate = sum(spikes(neuron, t-windowsize+1:t))/windowsize*1000;
-%                     rate = rate/windowsize*1000;
-                    spike_rates{n, k}(neuron, ceil((t-t_start)/t_step) ) = rate;
+            if timesteps>max_t
+                max_t = timesteps;
+            end
+            
+            for t = t_start+windowsize:t_step:timesteps
+                rate = sum(spikes(:, t-windowsize+1:t), 2)/windowsize*1000;
+                spike_rates{n, k}(:, ceil((t-t_start)/t_step)) = rate;
 
-                end
             end
         end
     end
