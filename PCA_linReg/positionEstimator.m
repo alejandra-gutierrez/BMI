@@ -42,8 +42,8 @@ function [x, y] = positionEstimator(test_data, modelParameters)
   t_max = size(test_data(1).spikes, 2); % how long is the current run
   
   % hardcoded parameters
-  windowsize = 35; % time window for velocity and spike rate estimation
-  t_step = windowsize /2.5;
+  windowsize = 15; % time window for velocity and spike rate estimation
+  t_step = windowsize /2;
   t_step = ceil(t_step); % prevent weirdness and unpredicatability
   t_mvt = 290; % hand movement start
   t_start = 1;
@@ -117,8 +117,11 @@ function [x, y] = positionEstimator(test_data, modelParameters)
     
 %     velx_estimated = wX'*principal_sr_test;
 %     vely_estimated = wY'*principal_sr_test;
-    velx_estimated = wX'*L_pr; 
-    vely_estimated = wY'*L_pr;
+    
+%     velx_estimated = wX'*L_pr; 
+%     vely_estimated = wY'*L_pr;
+    velx_estimated = nonLinModelFun(wX, L_pr); 
+    vely_estimated = nonLinModelFun(wY, L_pr); 
     
     x = 0; y=0;
     x(m) = sum(velx_estimated(t_mvt:end)) + test_data(m).startHandPos(1);

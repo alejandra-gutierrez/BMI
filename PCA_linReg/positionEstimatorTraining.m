@@ -20,7 +20,7 @@ tic;
 [N_trials_tr, N_angles] = size(training_data);
 N_neurons = size(training_data(1).spikes, 1);
 
-windowsize = 20;
+windowsize = 15;
 t_mvt = 210;
 t_pre_mvt = 300;
 t_step = windowsize/2;
@@ -105,12 +105,12 @@ fprintf("Starting Linear Regression.\t");
 for k_it = 0:N_angles
     fprintf("k=%g.\t", k_it);
     if (k_it ==0) % non-direction specific training
-        PCA_components_weights_x = linearRegression2(principal_spikes_0, velx_tr, k_it);
-        PCA_components_weights_y = linearRegression2(principal_spikes_0, vely_tr, k_it);
+        PCA_components_weights_x = nonLinReg(principal_spikes_0, velx_tr, k_it);
+        PCA_components_weights_y = nonLinReg(principal_spikes_0, vely_tr, k_it);
         k_it = N_angles+1;
     else  % direction specific training
-        PCA_components_weights_x = linearRegression2(principal_spikes_tr, velx_tr, k_it);
-        PCA_components_weights_y = linearRegression2(principal_spikes_tr, vely_tr, k_it);
+        PCA_components_weights_x = nonLinReg(principal_spikes_tr, velx_tr, k_it);
+        PCA_components_weights_y = nonLinReg(principal_spikes_tr, vely_tr, k_it);
     end
     
     modelParameters(k_it).PCAweightsX = PCA_components_weights_x;
