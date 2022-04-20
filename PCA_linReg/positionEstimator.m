@@ -104,24 +104,16 @@ function [x, y] = positionEstimator(test_data, modelParameters)
         lin_elmt = (principal_sr_test(:, t_shift) - principal_sr_test)*it/t_step;
         L_pr(:, t_red + it) = principal_sr_test + lin_elmt;  % linear interpolation
     end
-%     for it = 0:t_step-1
-%         L_pr(:, t_red + it) = principal_sr_test; % very rough
-%         interpolation
-%     end
+
     L_pr(:,t_end+1:end) = []; % remove possibly extra values
     
-%     figure(1); hold off;
-%     plot(t_red, principal_sr_test, 'o'); hold on
-%     plot(1:t_end, L_pr);
-    
-    
-%     velx_estimated = wX'*principal_sr_test;
-%     vely_estimated = wY'*principal_sr_test;
-    
-%     velx_estimated = wX'*L_pr; 
-%     vely_estimated = wY'*L_pr;
-    velx_estimated = nonLinModelFun(wX, L_pr); 
-    vely_estimated = nonLinModelFun(wY, L_pr); 
+    velx_estimated = wX'*L_pr; 
+    vely_estimated = wY'*L_pr;
+
+%     velx_estimated = nonLinModelFun(wX, L_pr); 
+%     vely_estimated = nonLinModelFun(wY, L_pr); 
+%       velx_estimated = predict(modelParameters.MdlnetX, L_pr);
+%       vely_estimated = predict(modelParameters.MdlnetY, L_pr);
     
     x = 0; y=0;
     x(m) = sum(velx_estimated(t_mvt:end)) + test_data(m).startHandPos(1);

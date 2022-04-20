@@ -82,6 +82,8 @@ for k_it =0:N_angles
     modelParameters(k_it).Vs = Vs;
     modelParameters(k_it).Ds = Ds;
     modelParameters(k_it).V_red = V_red;
+    modelParameters(k_it).MdlnetX = [];
+    modelParameters(k_it).MdlnetY = [];
 
     for n_it = 1:N_trials_tr
         if k_it == N_angles+1
@@ -108,18 +110,26 @@ for k_it = 0:N_angles
         [input_datax, output_datax] = linearizeInputOutput(principal_spikes_0, velx_tr, k_it);
         [input_datay, output_datay] = linearizeInputOutput(principal_spikes_0, vely_tr, k_it);
 
-        PCA_components_weights_x = nonLinReg(input_datax, output_datax);
-        PCA_components_weights_y = nonLinReg(input_datay, output_datay);
+        PCA_components_weights_x = linearRegression(input_datax, output_datax);
+        PCA_components_weights_y = linearRegression(input_datay, output_datay);
+
+%         MdlnetX = fitrnet(input_datax, output_datax);
+%         MdlnetY = fitrnet(input_datay, output_datay);
         k_it = N_angles+1;
     else  % direction specific training
         [input_datax, output_datax] = linearizeInputOutput(principal_spikes_tr, velx_tr, k_it);
         [input_datay, output_datay] = linearizeInputOutput(principal_spikes_tr, vely_tr, k_it);
-        PCA_components_weights_x = nonLinReg(input_datax, output_datax);
-        PCA_components_weights_y = nonLinReg(input_datay, output_datay);
+        PCA_components_weights_x = linearRegression(input_datax, output_datax);
+        PCA_components_weights_y = linearRegression(input_datay, output_datay);
+%         MdlnetX = fitrnet(input_datax, output_datax);
+%         MdlnetY = fitrnet(input_datay, output_datay);
     end
     
     modelParameters(k_it).PCAweightsX = PCA_components_weights_x;
     modelParameters(k_it).PCAweightsY = PCA_components_weights_y;
+%     modelParameters(k_it).MdlnetX = MdlnetX;
+%     modelParameters(k_it).MdlnetY = MdlnetY;
+
 end
 fprintf("\n Done.\n");
 fprintf("Model Parameters:\n");
@@ -134,7 +144,6 @@ for k_it = 1:N_angles+1
     wY = modelParameters(k_it).PCAweightsY;
     fprintf("dir=%g, M=%g,  size V_red=[%g, %g], size wX=[%g,%g], size wY=[%g,%g]\n",...
     dir, M, size(V_red,1),size(V_red,2), size(wX,1), size(wX, 2), size(wY,1), size(wY, 2));
-    
 end
 fprintf("\nFinished Training.\n");
 toc; fprintf("\n");
