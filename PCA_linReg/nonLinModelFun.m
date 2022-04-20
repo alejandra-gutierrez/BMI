@@ -8,7 +8,7 @@ function yhat = nonLinModelFun(beta, x)
     b(4, :) = beta(3*L+1 : 4*L);
 
 
-    yhat = b(1, :)*x + b(2, 1);
+    yhat = b(1, :)*x;
     % use 1st element of 1st row for cst element of regression (instead of
     % whole column)
 end

@@ -105,12 +105,17 @@ fprintf("Starting Linear Regression.\t");
 for k_it = 0:N_angles
     fprintf("k=%g.\t", k_it);
     if (k_it ==0) % non-direction specific training
-        PCA_components_weights_x = nonLinReg(principal_spikes_0, velx_tr, k_it);
-        PCA_components_weights_y = nonLinReg(principal_spikes_0, vely_tr, k_it);
+        [input_datax, output_datax] = linearizeInputOutput(principal_spikes_0, velx_tr, k_it);
+        [input_datay, output_datay] = linearizeInputOutput(principal_spikes_0, vely_tr, k_it);
+
+        PCA_components_weights_x = nonLinReg(input_datax, output_datax);
+        PCA_components_weights_y = nonLinReg(input_datay, output_datay);
         k_it = N_angles+1;
     else  % direction specific training
-        PCA_components_weights_x = nonLinReg(principal_spikes_tr, velx_tr, k_it);
-        PCA_components_weights_y = nonLinReg(principal_spikes_tr, vely_tr, k_it);
+        [input_datax, output_datax] = linearizeInputOutput(principal_spikes_tr, velx_tr, k_it);
+        [input_datay, output_datay] = linearizeInputOutput(principal_spikes_tr, vely_tr, k_it);
+        PCA_components_weights_x = nonLinReg(input_datax, output_datax);
+        PCA_components_weights_y = nonLinReg(input_datay, output_datay);
     end
     
     modelParameters(k_it).PCAweightsX = PCA_components_weights_x;
