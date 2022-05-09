@@ -1,0 +1,75 @@
+function [training_input, training_output] = linearizeInputOutput(training_input, training_output_vel, dir)
+    % axis: 1, 2, 3 for x, y, z respectively
+    
+    % does not assume prior knowledge on direction of motion
+    % (if did assume previous knowledge we would train model with only
+    % specific k_dir)
+    
+    % training input: neuronal spike rate data
+    %   {N_trials, k_dir} x [N_neurons x t_max]
+    % N_neurons might be a different value if using dimension reduction
+    % training output: hand velocity in specific axis
+    %   [N_trials, N_angle, t_max]
+    
+    % We can also input an averaged spike rate
+    [N_trials, N_angles] = size(training_input);
+    
+
+    
+    if ~exist('dir', 'var') || isempty(dir) || dir == 0
+        % do we want to use prior assumption on direction of movemnet?
+        % % if dir undefined: make cell vector linear(instead of 2D for each dir)!
+        % and then make mean!!
+        % otherwise select only dir valid (and will be linear vect)
+
+        dir = 1;
+        if size(training_input, 2)>1 % only resize if needed
+            training_input = training_input(:); % no specific direction: linearize to [N_trials x N_angles] from [K x 1] cell array
+        end
+        % new format is a [N_trials*N_angles x 1] cell containing [M x t_max_each] matrices 
+                
+        if size(training_output_vel, 2) > 1
+            [M,N,P,A] = size(training_output_vel);
+            training_output_vel = reshape(training_output_vel, [N*M, P, A]);
+            % new size: vel_axis = [N_trial*N_angles x max_t x Axis (3)]     
+        end
+    else    % we have a defined desired direction and make linear
+        if size(training_input, 2)> 1 % select correct dir only if needed
+            training_input = training_input(:, dir);
+                % new size: [N_trials x 1] cell, [N_neurons x t_max_each]
+        end
+        if size(training_output_vel, 2) > 1 % select correct dir only and squeeze matrix shape
+            training_output_vel = squeeze(training_output_vel(:, dir, :,:));
+                % new size: [N_trials x max_t]
+        end
+    end
+    
+    if (size(training_input, 1) ~= size(training_output_vel, 1))
+        error("wrong size!\nSize output:%g\nSize input: %g", size(training_input,2),size(training_output_vel,1));
+    end
+    N_neurons = size(training_input{1}, 1);
+    t_max_all = size(training_output_vel, 2); % should have already verified that all three are the same size
+    
+    % linearize arrays in time and trials
+    training_input2 = zeros(N_neurons, N_trials*t_max_all);
+
+
+    for n=1:size(training_input,1)
+        spikes_trial = training_input{n};
+        spikes_trial(N_neurons, t_max_all) = 0; % zeros padding
+        training_input2(:, 1+(n-1)*t_max_all : n*t_max_all) = spikes_trial;
+    end
+    training_output_vel = permute(training_output_vel, [2 1 3]);
+    training_output_vel = reshape(training_output_vel, [size(training_output_vel,2)*t_max_all, 3]);
+    % flatten array to have 3 columns (x, y, z)
+
+    if (length(training_output_vel) ~= size(training_input2, 2))
+        error("wrong size!\nSize output:%g\nSize input: %g", size(training_output_vel, 1), size(training_input2, 2));
+    end
+    
+    training_input = training_input2;
+    training_output_vel = training_output_vel(:,1:2); % assuming z dimension not used
+    training_output_vel = training_output_vel';
+    training_output = [training_output_vel];
+    % training_output: 6 x (many) array - [p_x, p_y, v_x, v_y, a_x, a_y]
+end
