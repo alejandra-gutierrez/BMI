@@ -98,7 +98,7 @@ V_red = Vs(:,1:M); % principal component vectors
 
 for k_it =0:N_angles
     spike_rate_av_trials = make_av_spike_rate(spike_rate, k_it);
-    [~, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials, proportion);
+%     [~, Vs, Ds, M] = spikes_PCA(spike_rate_av_trials, proportion);
     dir = k_it;
     if k_it == 0
         k_it = N_angles+1;
