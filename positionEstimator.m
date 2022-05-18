@@ -69,4 +69,3 @@ function [x, y] = positionEstimator(test_data, modelParameters)
 
     end
 end
-
