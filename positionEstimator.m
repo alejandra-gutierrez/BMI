@@ -45,19 +45,15 @@ function [x, y] = positionEstimator(test_data, modelParameters)
   windowsize = 15; % time window for velocity and spike rate estimation
   t_step = windowsize /2;
   t_step = ceil(t_step); % prevent weirdness and unpredicatability
-  t_mvt = 290; % hand movement start
+  t_mvt = 210;
   t_start = 1;
+  t_pre_mvt = 300;
   
   spike_rates_test = get_spike_rates2(test_data, windowsize, t_step, t_start); % time limiting step
     % this is a cell array of size [N_trials x 1]
     % containing [N_neurons x t_max_each] spike rates
   
-  %model_knn = modelParameters(9).knn;
-  model_KNNspikesr = modelParameters(9).KNNSpikesr;
-  model_KNNlabels = modelParameters(9).KNNLabels;
-  n_neighbours = modelParameters(9).n_neighbours;
-  N_KNN = size(model_KNNspikesr, 1);    %[N_trials*N_angles x N_neurons]
-
+  
 
   % ... compute position at the given timestep.
   for m=1:N_trials_test
@@ -66,40 +62,17 @@ function [x, y] = positionEstimator(test_data, modelParameters)
     t_end = size(test_data(m).spikes, 2);
     
     % STEP 1: COMPUTE PREDICTED DIRECTION
-    sr = sum(test_data(m).spikes(:, 1:t_mvt), 2)'; % [1 x N_neurons]
-    
-%     dir = predict(model_knn, sr); % using toolbox
-    
-    dist = zeros(1, size(model_KNNspikesr, 1)); 
-    for n_it = 1:N_KNN
-        dist(n_it) = sqrt(sum((sr - model_KNNspikesr(n_it, :)).^2));
-    end
-    [sortedDist, ind] = sort(dist, 2);
-    nearest_neighbours = ind(2:n_neighbours+1); % gives index in long list of which neighbour is close
-    
-    % gives the direction corresponding to this neighbour (from the label)
-    nearest_dirs(1:n_neighbours) = model_KNNlabels(nearest_neighbours); 
-    dir = mode(nearest_dirs(1:n_neighbours));  % find the most common value in the neighbourhood
-
-%     fprintf("\nPredicted dir: %g\n", dir);
-    
+    sr = sum(test_data(m).spikes(:, 1:t_pre_mvt), 2)'; % [1 x N_neurons]
+    dir = predict(modelParameters(1).knn, sr); % model same for all entries
+       
     
     % STEP 2: COMPUTE CURRENT POSITION 
-%     A = modelParameters(dir).A; % calculated in training
-%     W = modelParameters(dir).W; % calculated in training
-%     H = modelParameters(dir).H; % calculated in training
-%     Q = modelParameters(dir).Q; % calculated in training
-
-
-%     P = modelParameters(dir).P;
     V_red = modelParameters(dir).V_red;
     M = modelParameters(dir).M;
     spikes_mean = mean(spike_rates_test{m}, 2);
     principal_sr_test = V_red'*(spike_rates_test{m} - spikes_mean);
-%     principal_sr_test = (spike_rates_test{m} - spikes_mean);
 
-    
-    
+   
     t_red = t_start:t_step:t_end;
     t_shift = [2:length(t_red), length(t_red)];
     L_pr = zeros(M, t_end);
@@ -114,48 +87,66 @@ function [x, y] = positionEstimator(test_data, modelParameters)
     vel_x_estimated = predict(modelParameters(dir).x, L_pr, 'ObservationsIn', 'columns');
     vel_y_estimated = predict(modelParameters(dir).y, L_pr, 'ObservationsIn', 'columns');
 
-%     % KALMAN: BAYESIAN RECURSIVE
-%     estimated_params(:,1) = [0; 0];
-% %     pred_v = (A*x_k_minus_1);   
-%     pred_params(:,1) = A*[0; 0];
-%     j = 2;
-%     for k = t_mvt+1:1:t_end
-%             pred_params(:,j) = A*estimated_params(:,j-1);
-%             pred_P = A*P*A' + W;
-%             K = pred_P*H'/(H*pred_P*H' + Q);
-%             estimated_params(:,j) = pred_params(:,j) + K*(L_pr(:,j) -(H*pred_params(:,j)));
-%             j = j + 1;
-%             P = (eye(size(A,2))-(K*H))*pred_P;    
-% 
-%     end
-% 
-%     modelParameters(dir).P = P;
-% 
-%     velx_estimated = estimated_params(1,:);
-%     vely_estimated = estimated_params(2,:);
-% 
-% 
     x = 0; y=0;
-% 
-%     x2(m) = sum(velx_estimated(t_mvt:end)) + test_data(m).startHandPos(1);
-%     y2(m) = sum(vely_estimated(t_mvt:end)) + test_data(m).startHandPos(2);
-% 
-% 
-%     test_data(m).decodedHandPos(1) = x2(m);
-%     x(m) = x2(m);
-%     test_data(m).decodedHandPos(2) = y2(m);
-%     y(m) = y2(m);
-% 
-% 
-%     newModelParameters = modelParameters;
-
-      x(m) = sum(vel_x_estimated(t_mvt:end)) + test_data(m).startHandPos(1);
-      y(m) = sum(vel_y_estimated(t_mvt:end)) + test_data(m).startHandPos(2);
+    
+    x(m) = sum(vel_x_estimated(t_mvt:end)) + test_data(m).startHandPos(1);
+    y(m) = sum(vel_y_estimated(t_mvt:end)) + test_data(m).startHandPos(2);
   end
 
-  % Return Value:
-  
-  % - [x, y]:
-  %     current position of the hand
    
 end
+
+
+function spike_rates = get_spike_rates2(trials, windowsize, t_step, t_start)
+    % output size spike_rates: cell [N_trials x N_angles]
+%       each is a double, size [N_neurons  x (t_max_each/t_step)]
+
+% input trials - trial(n, k), spikes size(N_neurons, t_max)
+%input t_step: not there = assume keep all time steps
+% if t_step == 0 -> assume want default size reduction = windowsize/2
+
+
+    [N_trials, N_angles]= size(trials);
+    N_neurons = size(trials(1,1).spikes,1);
+    
+    
+    if ~exist('t_step', 'var') || isempty(t_step)
+        t_step = 1;
+    elseif t_step <=0
+        t_step = ceil(windowsize/2);
+    end
+    if ~exist('t_start', 'var') || isempty(t_start)
+        t_start = 1;
+    end
+    
+    t_start = t_start - 1; % offset for iteration
+    
+    % make sure these are integers!
+    t_start = floor(max([t_start, 0]));
+    windowsize = ceil(windowsize) ;
+    t_step = ceil(max([t_step, 1]));
+
+    spike_rates = cell(N_trials, N_angles);
+    
+    max_t = 0;
+
+    for n = 1:N_trials
+        for k = 1:N_angles
+            spikes = trials(n,k).spikes;
+            timesteps = size(spikes, 2);
+            spike_rates{n, k} = zeros(N_neurons, ceil(timesteps/t_step));
+            
+            if timesteps>max_t
+                max_t = timesteps;
+            end
+            
+            for t = t_start+windowsize:t_step:timesteps
+                rate = sum(spikes(:, t-windowsize+1:t), 2)/windowsize*1000;
+                spike_rates{n, k}(:, ceil((t-t_start)/t_step)) = rate;
+
+            end
+        end
+    end
+    
+end
+

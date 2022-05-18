@@ -1,21 +1,23 @@
-function [modelParameters] = positionEstimatorTraining(training_data)
-% Arguments:
+% Code will take an extremely long time to run, despite ASHA optimisation,
+% and imposed time limit. 
 
-% - training_data:
-%     training_data(n,k)              (n = trial id,  k = reaching angle)
-%     training_data(n,k).trialId      unique number of the trial
-%     training_data(n,k).spikes(i,t)  (i = neuron id, t = time)
-%     training_data(n,k).handPos(d,t) (d = dimension [1-3], t = time)
+% Results of all iterations are stored in x_results_dir and y_results_dir.
 
-% ... train your model
+% The model selected as optimum by fitrauto() is based only on minimising
+% error, and so may have a long training run time. 
+% To manually choose a model, enabling consideration of run time, export 
+% x_results_dir and y_results_dir into excel, rank the error (rank 1 given
+% to lowest error, rank N given to highest error for N results), and the
+% run time, create a weighted rank (0.8*error rank)+(0.2*time rank), select
+% lowest weighted rank that has a 'reasonable' run time. This judgement can
+% be made by the user. 
 
-% Return Value:
+load monkeydata_training.mat
 
-% - modelParameters:
-%     single structure containing all the learned parameters of your
-%     model and which can be used by the "positionEstimator" function.
-
-t_start = tic;
+% Set random number generator
+rng(2013);
+ix = randperm(length(trial));
+training_data = trial(ix(1:80),:);
 [N_trials_tr, N_angles] = size(training_data);
 N_neurons = size(training_data(1).spikes, 1);
 
@@ -45,15 +47,9 @@ for k_it = 1:N_angles
 end
 
 knn = fitcknn(spikesr, labels, 'NumNeighbors',21);
-for k_it = 1:N_angles+1
-    modelParameters.KNNSpikesr = spikesr;
-    modelParameters.KNNLabels = labels;
-    modelParameters.knn = knn;
-    modelParameters.n_neighbours = 21;
-end
-fprintf("KNN model done. "); toc;
+fprintf("KNN model done. ");
 
-%% TRAIN POSITION ESTIMATOR
+%% Hyperparameter Optimisation
 fprintf("Extracting Principal component vectors from data...");
 
 for k_it =0:N_angles
@@ -64,14 +60,7 @@ for k_it =0:N_angles
         k_it = N_angles+1;
     end
     V_red = Vs(:, 1:M);
-    modelParameters(k_it).M = M; % keep same M for all
-    modelParameters(k_it).dir = dir;
-    modelParameters(k_it).Vs = Vs;
-    modelParameters(k_it).Ds = Ds;
-    modelParameters(k_it).V_red = V_red;
-    modelParameters(k_it).MdlnetX = [];
-    modelParameters(k_it).MdlnetY = [];
-
+   
     for n_it = 1:N_trials_tr
         if k_it == N_angles+1
             for k = 1:N_angles
@@ -91,49 +80,47 @@ fprintf("Extracted PCA parameters.\n"); toc;
 
 fprintf("Starting Neural Networks Training.\t");
 
+% cell arrays to store direction-specific results from hyperparameter
+% optimisation
+x_results_dir = cell(1, 9);
+y_results_dir = cell(1, 9);
+
 for k_it = 0:N_angles
     fprintf("k=%g.\t", k_it);
     if (k_it ==0) % non-direction specific training
         [input_datax, output_datax] = linearizeInputOutput(principal_spikes_0, velx_tr, k_it);
         [input_datay, output_datay] = linearizeInputOutput(principal_spikes_0, vely_tr, k_it);
 
-% % ------------------ Hyperoptimised parameters:  -------------------- % 
-        x_activation = 'relu';
-        y_activation = 'relu';
-        x_lambda = 5e-04;
-        y_lambda = 5e-04;
-        x_standardize = false;
-        y_standardize = false;
-        x_layers = [10];
-        y_layers = [8];
-% % --------------------------------------------------------- % 
+        % Find optimised hyperparameters
+        [~, x_results] = fitrauto(input_datax', output_datax,"Learners", "net","HyperparameterOptimizationOptions",struct("Optimizer","asha","MaxTime", 1000));
+        disp("x results, k = 0 done")
+        [~, y_results] = fitrauto(input_datay', output_datay,"Learners", "net", "HyperparameterOptimizationOptions",struct("Optimizer","asha","MaxTime", 1000));
+        disp("y results, k = 0 done")
 
-
-        mdl_x = fitrnet(input_datax, output_datax,'Activations', x_activation, 'Lambda', x_lambda, 'Standardize', x_standardize, 'LayerSizes', x_layers, 'ObservationsIn','columns');
-        mdl_y = fitrnet(input_datay, output_datay,'Activations', y_activation, 'Lambda', y_lambda, 'Standardize', y_standardize, 'LayerSizes', y_layers, 'ObservationsIn','columns');
-        
+        x_results_dir{1, 9} = x_results;
+        y_results_dir{1, 9} = y_results;
 
         k_it = N_angles+1;
+
     else  % direction specific training
+        
         [input_datax, output_datax] = linearizeInputOutput(principal_spikes_tr, velx_tr, k_it);
         [input_datay, output_datay] = linearizeInputOutput(principal_spikes_tr, vely_tr, k_it);
 
-        % model parameters from non-direction specific case used for all
-        % directions
-        mdl_x = fitrnet(input_datax, output_datax,'Activations', x_activation, 'Lambda', x_lambda, 'Standardize', x_standardize, 'LayerSizes', x_layers, 'ObservationsIn','columns');
-        mdl_y = fitrnet(input_datay, output_datay,'Activations', y_activation, 'Lambda', y_lambda, 'Standardize', y_standardize, 'LayerSizes', y_layers, 'ObservationsIn','columns');
+
+        % Find optimised hyperparameters 
+        [~, x_results] = fitrauto(input_datax', output_datax,"Learners", "net","HyperparameterOptimizationOptions",struct("Optimizer","asha","MaxTime", 1000));
+        disp("x results, k = "+k_it+" done")
+        [~, y_results] = fitrauto(input_datay', output_datay, "Learners", "net", "HyperparameterOptimizationOptions",struct("Optimizer","asha","MaxTime", 1000));
+        disp("y results, k = "+k_it+" done")
+
+        x_results_dir{1, k_it} = x_results;
+        y_results_dir{1, k_it} = y_results;
 
     end
 
-    modelParameters(k_it).x = mdl_x;
-    modelParameters(k_it).y = mdl_y;
-
 end
 fprintf("\n Done.\n");
-fprintf("\nFinished Training.\n");
-end
-
-
 
 function [x_vel, y_vel, z_vel] = getvel2(trials , windowsize, t_step, t_start)
 
