@@ -62,7 +62,7 @@ modelParameters.KNNSpikesr = spikesr;
 modelParameters.KNNLabels = labels;
 modelParameters.knn = knn;
 modelParameters.n_neighbours = 21;
-fprintf("KNN model done. "); toc;
+fprintf("KNN model done. ");
 %%
 t_mvt = 210; % start of relevant neural data for movement 
 
@@ -130,6 +130,9 @@ for k_it = 1:N_directions
 end
 
 %% NON DIRECTION SPECIFIC TRAINING
+% method inspired by tutorial: https://www.mathworks.com/help/deeplearning/ug/sequence-to-sequence-regression-using-deep-learning.html
+% date accessed: 16.05.2022
+
 training_input = reshape(principle_spikes,[],1);
 
 
@@ -137,7 +140,7 @@ training_input = reshape(principle_spikes,[],1);
 modelParameters.mu = mu;
 modelParameters.sig = sig;
  
-fprintf("Extracted PCA parameters.\n"); toc;
+fprintf("Extracted PCA parameters.\n");
 
 
 tic;
@@ -178,6 +181,7 @@ options = trainingOptions('adam', ...
     'Verbose',0);
 modelParameters.nnet = trainNetwork(training_input,training_velocities,layers,options);
 toc;
+
 % %% DIRECTION SPECIFIC TRAINING
 % 
 % % store mean and standard deviation - same need to be used to normalise test data
